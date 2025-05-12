@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: redcare-case
+
+  main:
+    banner-mode: off
+
+  config:
+    import:
+      file:env\prod.env[.properties]
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    reactor.netty: WARN
+    org.springframework.web: WARN
+    com.mmazurovsky.redcarecase: DEBUG
+
+# GitHub API Configuration (replace with your token)
+github:
+  api:
+    token: ${GITHUB_API_TOKEN:}
+
+# Server configuration
+server:
+  port: 8080
+  error:
+    include-exception: true
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: always
+    whitelabel:
+      enabled: false

@@ -21,9 +21,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.projectreactor:reactor-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // Netty client
+    implementation("io.projectreactor.netty:reactor-netty-http")
 
     // JSON processing
     implementation("com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations")
