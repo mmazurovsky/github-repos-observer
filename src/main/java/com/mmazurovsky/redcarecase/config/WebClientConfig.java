@@ -1,13 +1,18 @@
 package com.mmazurovsky.redcarecase.config;
 
+import com.mmazurovsky.redcarecase.service.SearchServiceImpl;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.http.client.HttpClient;
 
@@ -16,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class WebClientConfig {
+    private static final Logger logger = LoggerFactory.getLogger(WebClientConfig.class);
+
     @Value("${github.api.token}")
     private String githubToken;
 
@@ -40,12 +47,32 @@ public class WebClientConfig {
                 .codecs(configurer ->
                         configurer.defaultCodecs().maxInMemorySize(2 * 1024 * 1024) // 2MB
                 )
-
                 .baseUrl("https://api.github.com")
                 .defaultHeader("Accept", "application/vnd.github+json")
                 .defaultHeader("X-GitHub-Api-Version", "2022-11-28")
                 .defaultHeader("Authorization", "Bearer " + githubToken)
-
+                .filter(logRequest())
                 .build();
+    }
+
+    private ExchangeFilterFunction logRequest() {
+        return ExchangeFilterFunction.ofRequestProcessor(clientRequest -> {
+            StringBuilder log = new StringBuilder();
+            log.append("→ ")
+                    .append(clientRequest.method())
+                    .append(" ")
+                    .append(clientRequest.url());
+
+            clientRequest.headers().forEach((name, values) -> {
+                if (!name.equalsIgnoreCase("Authorization")) {
+                    log.append("\n  ").append(name).append(": ").append(String.join(",", values));
+                } else {
+                    log.append("\n  ").append(name).append(": [REDACTED]");
+                }
+            });
+
+            logger.debug(log.toString());
+            return Mono.just(clientRequest);
+        });
     }
 }
