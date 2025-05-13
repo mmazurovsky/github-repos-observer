@@ -113,7 +113,7 @@ public class RepositoriesSearchControllerValidationTest {
     void whenAllValid_thenPasses() {
         // Mock service response
         Mockito.when(searchAndScoringService.searchAndOutputRepositoriesWithScores(Mockito.any()))
-                .thenReturn(Flux.just(new RepositoriesSearchOut("repo", "url", 1, 1, "recent", 0.1, null, null)));
+                .thenReturn(Flux.just(new RepositoriesSearchOut("repo", "url", null, null, 1, 1, "recent", 0.1)));
 
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/api/search")
@@ -132,7 +132,7 @@ public class RepositoriesSearchControllerValidationTest {
     void whenOnlyKeywordsProvided_thenPasses() {
         // Mock service response
         Mockito.when(searchAndScoringService.searchAndOutputRepositoriesWithScores(Mockito.any()))
-                .thenReturn(Flux.just(new RepositoriesSearchOut("repo", "url", 1, 1, "recent", 0.1, null, null)));
+                .thenReturn(Flux.just(new RepositoriesSearchOut("repo", "url", null, null, 1, 1, "recent", 0.1)));
 
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/api/search")
