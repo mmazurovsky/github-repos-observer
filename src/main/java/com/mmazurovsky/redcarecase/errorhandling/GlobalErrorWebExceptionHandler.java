@@ -1,4 +1,4 @@
-package com.mmazurovsky.redcarecase.errors;
+package com.mmazurovsky.redcarecase.errorhandling;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
