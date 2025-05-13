@@ -2,13 +2,14 @@ package com.mmazurovsky.redcarecase.client;
 
 import com.mmazurovsky.redcarecase.dto.external.GithubRepositorySearchResponse;
 import com.mmazurovsky.redcarecase.dto.in.RepositoriesSearchIn;
-import com.mmazurovsky.redcarecase.service.SearchServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.TimeoutException;
 
 @Component
 public class GithubClientImpl implements GithubClient {
@@ -43,15 +45,15 @@ public class GithubClientImpl implements GithubClient {
                         .queryParam("order", "desc")
                         .queryParam("page", page)
                         .queryParam("per_page", perPage)
-                        .build()
-                )
+                        .build(true))
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, clientResponse ->
                         clientResponse.bodyToMono(String.class)
                                 .flatMap(errorBody -> {
                                     logger.error("4xx error from GitHub for page {}: {}", page, errorBody);
-                                    return clientResponse.createException()
-                                            .flatMap(Mono::error);
+                                    return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "There is an" +
+                                            " " +
+                                            "error when searching with Github API"));
                                 })
                 )
                 .onStatus(HttpStatusCode::is5xxServerError, clientResponse ->
@@ -64,20 +66,28 @@ public class GithubClientImpl implements GithubClient {
                 )
                 .bodyToMono(GithubRepositorySearchResponse.class)
                 .retryWhen(
-                        Retry.backoff(2, Duration.ofMillis(200))
+                        Retry.backoff(2, Duration.ofMillis(400))
                                 .filter(throwable -> throwable instanceof WebClientResponseException &&
                                         ((WebClientResponseException) throwable).getStatusCode().is5xxServerError())
                                 .onRetryExhaustedThrow((spec, signal) ->
-                                        new RuntimeException("Retries exhausted after server errors: " + signal.failure().getMessage(), signal.failure())
+                                        new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Retries " +
+                                                "exhausted after server errors: " + signal.failure().getMessage(),
+                                                signal.failure())
                                 )
                                 .doBeforeRetry(signal ->
                                         logger.warn("Retrying page {} due to: {}", page, signal.failure().getMessage())
                                 )
                 )
-                .timeout(Duration.ofSeconds(1)) // total max duration per call including retries
-                .doOnError(error ->
-                        logger.error("Request failed for page {}: {}", page, error.getMessage())
-                );
+                .onErrorMap(TimeoutException.class,
+                        te -> new ResponseStatusException(
+                                HttpStatus.GATEWAY_TIMEOUT, "GitHub request timed‑out", te))
+                .onErrorMap(WebClientRequestException.class,
+                        ce -> new ResponseStatusException(
+                                HttpStatus.SERVICE_UNAVAILABLE, "GitHub connection error", ce))
+                // fallback: any other
+                .onErrorMap(ex -> !(ex instanceof ResponseStatusException),
+                        ex -> new ResponseStatusException(
+                                HttpStatus.INTERNAL_SERVER_ERROR, "GitHub client failure", ex));
     }
 
 
@@ -90,7 +100,7 @@ public class GithubClientImpl implements GithubClient {
 
         if (request.language().isPresent()) {
             // Add language filter
-            queryBuilder.append("+language:").append(request.language());
+            queryBuilder.append("+language:").append(request.language().get());
         }
 
         final var earliestCreatedDate = request.earliestCreatedDate();
