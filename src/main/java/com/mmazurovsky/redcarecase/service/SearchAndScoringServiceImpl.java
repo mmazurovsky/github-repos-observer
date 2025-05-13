@@ -7,11 +7,11 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 @Service
-public class CoordinationServiceImpl implements CoordinationService {
+public class SearchAndScoringServiceImpl implements SearchAndScoringService {
     private final SearchService searchService;
     private final ScoringService scoringService;
 
-    public CoordinationServiceImpl(SearchService searchService, ScoringService scoringService) {
+    public SearchAndScoringServiceImpl(SearchService searchService, ScoringService scoringService) {
         this.searchService = searchService;
         this.scoringService = scoringService;
     }

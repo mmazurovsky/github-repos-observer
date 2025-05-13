@@ -2,33 +2,27 @@ package com.mmazurovsky.redcarecase.controller;
 
 import com.mmazurovsky.redcarecase.dto.in.RepositoriesSearchIn;
 import com.mmazurovsky.redcarecase.dto.out.RepositoriesSearchOut;
-import com.mmazurovsky.redcarecase.service.CoordinationService;
-import jakarta.validation.constraints.Past;
-import jakarta.validation.constraints.Size;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.MediaType;
+import com.mmazurovsky.redcarecase.service.SearchAndScoringService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api")
 public class RepositoriesSearchController {
 
-    private final CoordinationService coordinationService;
+    private final SearchAndScoringService searchAndScoringService;
 
-    public RepositoriesSearchController(CoordinationService coordinationService) {
-        this.coordinationService = coordinationService;
+    public RepositoriesSearchController(SearchAndScoringService searchAndScoringService) {
+        this.searchAndScoringService = searchAndScoringService;
     }
 
     @GetMapping("/search")
     public Mono<List<RepositoriesSearchOut>> searchRepositories(
             @Validated @ModelAttribute RepositoriesSearchIn request
     ) {
-        return coordinationService.searchAndOutputRepositoriesWithScores(request).collectList();
+        return searchAndScoringService.searchAndOutputRepositoriesWithScores(request).collectList();
     }
 }

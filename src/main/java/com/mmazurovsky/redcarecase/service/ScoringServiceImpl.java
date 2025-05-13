@@ -7,10 +7,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.Optional;
 
 @Service
 public class ScoringServiceImpl implements ScoringService {
@@ -31,9 +34,14 @@ public class ScoringServiceImpl implements ScoringService {
                 repositoryItem.updatedAt()
         );
 
+        final Optional<LocalDate> created = repositoryItem.created()
+                .map(OffsetDateTime::toLocalDate);
+
         return new RepositoriesSearchOut(
                 repositoryItem.name(),
                 repositoryItem.htmlUrl(),
+                repositoryItem.language(),
+                created,
                 repositoryItem.stargazersCount(),
                 repositoryItem.forksCount(),
                 recency,

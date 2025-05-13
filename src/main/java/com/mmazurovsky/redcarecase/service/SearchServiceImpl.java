@@ -37,11 +37,18 @@ public class SearchServiceImpl implements SearchService {
                                     if (response.incompleteResults()) {
                                         logger.warn("Incomplete results for page {}", page);
                                     }
-                                    return Flux.fromIterable(response.items());
+
+                                    final var items = response.items();
+
+                                    if (items.isEmpty()) {
+                                        return Flux.empty();
+                                    } else {
+                                        return Flux.fromIterable(items);
+                                    }
                                 })
                                 .onErrorResume(error -> {
                                     logger.error("Failed to fetch page {} after retries: {}", page, error.getMessage());
-                                    return Flux.empty(); // Skip page but continue
+                                    return Mono.error(error);
                                 })
                 );
     }

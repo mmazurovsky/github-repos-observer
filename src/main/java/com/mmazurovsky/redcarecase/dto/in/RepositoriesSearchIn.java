@@ -1,5 +1,6 @@
 package com.mmazurovsky.redcarecase.dto.in;
 
+import com.mmazurovsky.redcarecase.util.Const;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
@@ -10,17 +11,19 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 public record RepositoriesSearchIn(
-        @Size(max = 50, min = 1, message = "Search keywords must be 50 characters or less")
+        @Size(min = 1, max = 50, message = Const.MSG_KEYWORDS_LENGTH)
         String keywords,
 
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        Optional<@Past(message = "Earliest created date must be in the past") LocalDate> earliestCreatedDate,
+        Optional<@Past(message = Const.MSG_EARLIEST_DATE_PAST) LocalDate> earliestCreatedDate,
 
-        Optional<@Pattern(
-                regexp = "^[a-zA-Z0-9]+$",
-                message = "Programming language must be a single string without spaces or commas"
+        Optional<
+                @Size(min = 1, message = Const.MSG_LANGUAGE_LENGTH)
+                @Pattern(
+                regexp = Const.REGEX_LANGUAGE,
+                message = Const.MSG_LANGUAGE_PATTERN
         ) String> language,
 
-        Optional<@Max(value = 20, message = "Max pages to be searched must be less than or equal to 20") Integer> maxPages
+        Optional<@Max(value = 20, message = Const.MSG_MAX_PAGES) Integer> maxPages
 ) {
 }
