@@ -5,15 +5,12 @@ import com.mmazurovsky.redcarecase.dto.external.GithubRepositoryItemResponse;
 import com.mmazurovsky.redcarecase.dto.in.RepositoriesSearchIn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
+import reactor.core.publisher.FluxSink;
 
-import java.time.Duration;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class SearchServiceImpl implements SearchService {
@@ -30,26 +27,40 @@ public class SearchServiceImpl implements SearchService {
     public Flux<GithubRepositoryItemResponse> searchRepositories(RepositoriesSearchIn request) {
         final int maxPages = request.maxPages().orElse(5);
 
-        return Flux.range(1, maxPages)
-                .concatMap(page ->
-                        githubRepositoryClient.searchRepositories(request, page, RESULTS_PER_PAGE)
-                                .flatMapMany(response -> {
-                                    if (response.incompleteResults()) {
-                                        logger.warn("Incomplete results for page {}", page);
-                                    }
+        return Flux.create(sink -> {
+            List<GithubRepositoryItemResponse> buffer = new ArrayList<>();
+            fetchPageRecursively(request, 1, maxPages, sink, buffer);
+        });
+    }
 
-                                    final var items = response.items();
+    private void fetchPageRecursively(RepositoriesSearchIn request,
+                                      int page,
+                                      int maxPages,
+                                      FluxSink<GithubRepositoryItemResponse> sink,
+                                      List<GithubRepositoryItemResponse> buffer) {
 
-                                    if (items.isEmpty()) {
-                                        return Flux.empty();
-                                    } else {
-                                        return Flux.fromIterable(items);
-                                    }
-                                })
-                                .onErrorResume(error -> {
-                                    logger.error("Failed to fetch page {} after retries: {}", page, error.getMessage());
-                                    return Mono.error(error);
-                                })
-                );
+        if (page > maxPages || sink.isCancelled()) {
+            sink.complete();
+            return;
+        }
+
+        githubRepositoryClient.searchRepositories(request, page, RESULTS_PER_PAGE)
+                .subscribe(response -> {
+                    if (response.isPresent() && !response.get().items().isEmpty()) {
+                        List<GithubRepositoryItemResponse> items = response.get().items();
+                        buffer.addAll(items);
+                        items.forEach(sink::next);
+                        fetchPageRecursively(request, page + 1, maxPages, sink, buffer); // Recurse
+                    } else {
+                        sink.complete(); // Stop on empty or missing response
+                    }
+                }, error -> {
+                    logger.error("Error when fetching page {}, error: {}", page, error.toString());
+                    if (!buffer.isEmpty()) {
+                        sink.complete(); // Return what we have
+                    } else {
+                        sink.error(error); // No data at all, propagate error
+                    }
+                });
     }
 }

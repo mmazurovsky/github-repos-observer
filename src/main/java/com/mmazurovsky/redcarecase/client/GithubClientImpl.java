@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 @Component
@@ -30,7 +31,7 @@ public class GithubClientImpl implements GithubClient {
     }
 
     @Override
-    public Mono<GithubRepositorySearchResponse> searchRepositories(
+    public Mono<Optional<GithubRepositorySearchResponse>> searchRepositories(
             RepositoriesSearchIn request,
             int page,
             int perPage
@@ -46,37 +47,43 @@ public class GithubClientImpl implements GithubClient {
                         .queryParam("page", page)
                         .queryParam("per_page", perPage)
                         .build(true))
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, clientResponse ->
-                        clientResponse.bodyToMono(String.class)
+                .exchangeToMono(clientResponse -> {
+                    final var status = clientResponse.statusCode();
+
+                    if (status.value() == 422) {
+                        // INFO: Page can't be processed, previous page was the last
+                        return Mono.just(Optional.<GithubRepositorySearchResponse>empty());
+                    } else if (status.is4xxClientError()) {
+                        return clientResponse.bodyToMono(String.class)
                                 .flatMap(errorBody -> {
                                     logger.error("4xx error from GitHub for page {}: {}", page, errorBody);
-                                    return Mono.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "There is an" +
-                                            " " +
-                                            "error when searching with Github API"));
-                                })
-                )
-                .onStatus(HttpStatusCode::is5xxServerError, clientResponse ->
-                        clientResponse.bodyToMono(String.class)
+                                    return Mono.error(new ResponseStatusException(
+                                            HttpStatus.INTERNAL_SERVER_ERROR,
+                                            "There is an application error when requesting Github API"
+                                    ));
+                                });
+                    } else if (status.is5xxServerError()) {
+                        return clientResponse.bodyToMono(String.class)
                                 .flatMap(errorBody -> {
                                     logger.error("5xx error from GitHub for page {}: {}", page, errorBody);
                                     return clientResponse.createException()
                                             .flatMap(Mono::error);
-                                })
-                )
-                .bodyToMono(GithubRepositorySearchResponse.class)
+                                });
+                    } else {
+                        return clientResponse.bodyToMono(GithubRepositorySearchResponse.class)
+                                .map(Optional::of);
+                    }
+                })
                 .retryWhen(
                         Retry.backoff(2, Duration.ofMillis(400))
                                 .filter(throwable -> throwable instanceof WebClientResponseException &&
                                         ((WebClientResponseException) throwable).getStatusCode().is5xxServerError())
                                 .onRetryExhaustedThrow((spec, signal) ->
-                                        new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Retries " +
-                                                "exhausted after server errors: " + signal.failure().getMessage(),
-                                                signal.failure())
-                                )
+                                        new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                                "Retries exhausted after server errors: " + signal.failure().getMessage(),
+                                                signal.failure()))
                                 .doBeforeRetry(signal ->
-                                        logger.warn("Retrying page {} due to: {}", page, signal.failure().getMessage())
-                                )
+                                        logger.warn("Retrying page {} due to: {}", page, signal.failure().getMessage()))
                 )
                 .onErrorMap(TimeoutException.class,
                         te -> new ResponseStatusException(
@@ -84,11 +91,11 @@ public class GithubClientImpl implements GithubClient {
                 .onErrorMap(WebClientRequestException.class,
                         ce -> new ResponseStatusException(
                                 HttpStatus.SERVICE_UNAVAILABLE, "GitHub connection error", ce))
-                // fallback: any other
                 .onErrorMap(ex -> !(ex instanceof ResponseStatusException),
                         ex -> new ResponseStatusException(
                                 HttpStatus.INTERNAL_SERVER_ERROR, "GitHub client failure", ex));
     }
+
 
 
     private String buildQueryString(RepositoriesSearchIn request) {
