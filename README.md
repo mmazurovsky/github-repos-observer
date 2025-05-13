@@ -16,9 +16,10 @@ Implements a single reactive **GET** endpoint to fulfill the coding challenge:
 
 ## ⚙️ Prerequisites
 
-| Tool       | Version    |
-|------------|------------|
-| Java       | 21         |
+| Tool   | Version |
+|--------|---------|
+| Java   | 21      |
+| Gradle | 8.4     |
 
 
 
