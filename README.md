@@ -19,7 +19,7 @@ Implements a single reactive **GET** endpoint to fulfill the coding challenge:
 | Tool   | Version |
 |--------|---------|
 | Java   | 21      |
-| Gradle | 8.4     |
+| Gradle | 8.4+    |
 
 
 
