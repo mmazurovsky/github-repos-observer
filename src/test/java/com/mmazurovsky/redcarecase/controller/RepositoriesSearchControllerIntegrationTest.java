@@ -121,4 +121,26 @@ class RepositoriesSearchControllerIntegrationTest {
                 });
     }
 
+    @Test
+    @Order(4)
+    void search_nonExistSearch_shouldReturnEmptyList() {
+        webTestClient
+                .mutate()
+                .responseTimeout(Duration.ofSeconds(30))
+                .build()
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/search")
+                        .queryParam("keywords", "SAP Instagram bot")
+                        .queryParam("language", "Murmansk")
+                        .queryParam("earliestCreatedDate", "2025-05-12")
+                        .queryParam("maxPages", 10)
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(RepositoriesSearchOut.class)
+                .value(list -> {
+                    assertTrue(list.isEmpty());
+                });
+    }
 }
