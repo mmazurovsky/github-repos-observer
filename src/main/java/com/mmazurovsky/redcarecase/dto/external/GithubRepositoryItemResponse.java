@@ -9,12 +9,10 @@ public record GithubRepositoryItemResponse(
         String fullName,
         @JsonProperty("html_url")
         String htmlUrl,
-        String description,
         @JsonProperty("stargazers_count")
         int stargazersCount,
         @JsonProperty("forks_count")
         int forksCount,
         @JsonProperty("updated_at")
-        String updatedAt,
-        String language
+        String updatedAt
 ) {}
