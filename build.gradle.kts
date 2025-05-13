@@ -35,6 +35,8 @@ dependencies {
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
+    // Other
+    implementation("io.netty:netty-resolver-dns-native-macos:4.1.107.Final:osx-aarch_64")
 }
 
 tasks.withType<Test> {
