@@ -16,7 +16,7 @@ public final class Const {
             "Language must be at least 1 characters long";
 
     public static final String MSG_MAX_PAGES =
-            "Max pages to be searched must be less than or equal to 20";
+            "Max pages to be searched must be less than or equal to 10";
 
     // --- Regular expressions -------------------------------------------------
     public static final String REGEX_LANGUAGE = "^[a-zA-Z0-9]+$";
