@@ -10,11 +10,14 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
+
+import java.time.Duration;
+import java.util.Collections;
 
 @Service
 public class SearchServiceImpl implements SearchService {
     private static final Logger logger = LoggerFactory.getLogger(SearchServiceImpl.class);
-    private static final int MAX_PAGES = 10; // Prevent infinite pagination
     private static final int RESULTS_PER_PAGE = 100;
 
     private final GithubClient githubRepositoryClient;
@@ -24,34 +27,22 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    @Retryable(
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 1000, multiplier = 2.0)
-    )
     public Flux<GithubRepositoryItemResponse> searchRepositories(RepositoriesSearchIn request) {
-        return Flux.range(1, MAX_PAGES)
+        final int maxPages = request.maxPages().orElse(5);
+
+        return Flux.range(1, maxPages)
                 .concatMap(page ->
                         githubRepositoryClient.searchRepositories(request, page, RESULTS_PER_PAGE)
                                 .flatMapMany(response -> {
-                                    // Log if results are incomplete
                                     if (response.incompleteResults()) {
                                         logger.warn("Incomplete results for page {}", page);
                                     }
-
-                                    // If no items, return empty flux
-                                    if (response.items() == null || response.items().isEmpty()) {
-                                        return Flux.empty();
-                                    }
-
-                                    // Transform and enrich each repository item
-                                    return Flux.fromIterable(response.items())
-                                            .flatMap(item ->
-                                                    // Enrich each repository item
-                                                    Mono.just(item)
-                                            );
+                                    return Flux.fromIterable(response.items());
                                 })
-                                // Stop if no more results
-                                .takeUntil(item -> false)
+                                .onErrorResume(error -> {
+                                    logger.error("Failed to fetch page {} after retries: {}", page, error.getMessage());
+                                    return Flux.empty(); // Skip page but continue
+                                })
                 );
     }
 }
