@@ -46,21 +46,29 @@ public class SearchServiceImpl implements SearchService {
 
         githubRepositoryClient.searchRepositories(request, page, RESULTS_PER_PAGE)
                 .subscribe(response -> {
-                    if (response.isPresent() && !response.get().items().isEmpty()) {
-                        List<GithubRepositoryItemResponse> items = response.get().items();
+                    // Mono was not empty
+                    if (!response.items().isEmpty()) {
+                        List<GithubRepositoryItemResponse> items = response.items();
                         buffer.addAll(items);
                         items.forEach(sink::next);
-                        fetchPageRecursively(request, page + 1, maxPages, sink, buffer); // Recurse
+
+                        // Recurse to next page
+                        fetchPageRecursively(request, page + 1, maxPages, sink, buffer);
                     } else {
-                        sink.complete(); // Stop on empty or missing response
+                        sink.complete(); // Empty page: stop
                     }
                 }, error -> {
                     logger.error("Error when fetching page {}, error: {}", page, error.toString());
+
                     if (!buffer.isEmpty()) {
                         sink.complete(); // Return what we have
                     } else {
-                        sink.error(error); // No data at all, propagate error
+                        sink.error(error); // No data at all — propagate error
                     }
+                }, () -> {
+                    // onComplete: triggered when Mono is empty
+                    sink.complete();
                 });
     }
+
 }

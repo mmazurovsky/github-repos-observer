@@ -31,7 +31,7 @@ public class GithubClientImpl implements GithubClient {
     }
 
     @Override
-    public Mono<Optional<GithubRepositorySearchResponse>> searchRepositories(
+    public Mono<GithubRepositorySearchResponse> searchRepositories(
             RepositoriesSearchIn request,
             int page,
             int perPage
@@ -51,27 +51,25 @@ public class GithubClientImpl implements GithubClient {
                     final var status = clientResponse.statusCode();
 
                     if (status.value() == 422) {
-                        // INFO: Page can't be processed, previous page was the last
-                        return Mono.just(Optional.<GithubRepositorySearchResponse>empty());
+                        // Page can't be processed → treat as no result
+                        return Mono.empty();
                     } else if (status.is4xxClientError()) {
                         return clientResponse.bodyToMono(String.class)
                                 .flatMap(errorBody -> {
                                     logger.error("4xx error from GitHub for page {}: {}", page, errorBody);
                                     return Mono.error(new ResponseStatusException(
                                             HttpStatus.INTERNAL_SERVER_ERROR,
-                                            "There is an application error when requesting Github API"
+                                            "Application error when requesting GitHub API"
                                     ));
                                 });
                     } else if (status.is5xxServerError()) {
                         return clientResponse.bodyToMono(String.class)
                                 .flatMap(errorBody -> {
                                     logger.error("5xx error from GitHub for page {}: {}", page, errorBody);
-                                    return clientResponse.createException()
-                                            .flatMap(Mono::error);
+                                    return clientResponse.createException().flatMap(Mono::error);
                                 });
                     } else {
-                        return clientResponse.bodyToMono(GithubRepositorySearchResponse.class)
-                                .map(Optional::of);
+                        return clientResponse.bodyToMono(GithubRepositorySearchResponse.class);
                     }
                 })
                 .retryWhen(
@@ -95,8 +93,6 @@ public class GithubClientImpl implements GithubClient {
                         ex -> new ResponseStatusException(
                                 HttpStatus.INTERNAL_SERVER_ERROR, "GitHub client failure", ex));
     }
-
-
 
     private String buildQueryString(RepositoriesSearchIn request) {
         // Create query builder

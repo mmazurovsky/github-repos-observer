@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 import java.util.Optional;
 
 public interface GithubClient {
-    Mono<Optional<GithubRepositorySearchResponse>> searchRepositories(
+    Mono<GithubRepositorySearchResponse> searchRepositories(
             RepositoriesSearchIn request,
             int page,
             int perPage
