@@ -5,6 +5,9 @@ import com.mmazurovsky.redcarecase.dto.in.RepositoriesSearchIn;
 import com.mmazurovsky.redcarecase.dto.out.RepositoriesSearchOut;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 public class SearchAndScoringServiceImpl implements SearchAndScoringService {
@@ -18,9 +21,8 @@ public class SearchAndScoringServiceImpl implements SearchAndScoringService {
 
     @Override
     public Flux<RepositoriesSearchOut> searchAndOutputRepositoriesWithScores(RepositoriesSearchIn request) {
-        final Flux<GithubRepositoryItemResponse> found = searchService.searchRepositories(request);
-        final Flux<RepositoriesSearchOut> enrichedWithScore = scoringService.convertAndEnrichWithScoreMany(found);
-        return enrichedWithScore;
+        final Flux<GithubRepositoryItemResponse> found = searchService.searchRepositories(request);;
+        return scoringService.convertAndEnrichWithScoreMany(found);
     }
 
 }
