@@ -20,7 +20,7 @@ logging:
 # GitHub API Configuration (replace with your token)
 github:
   api:
-    token: ${GITHUB_API_TOKEN:}
+    token: ${GITHUB_API_TOKEN}
 
 # Server configuration
 server:
