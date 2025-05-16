@@ -30,15 +30,10 @@ public class SearchServiceImpl implements SearchService {
         return Flux.range(1, maxPages)
                 .concatMap(page ->
                         githubRepositoryClient.searchRepositories(request, page, RESULTS_PER_PAGE)
-                                .flatMapMany(response -> {
-                                    if (response.incompleteResults()) {
-                                        logger.warn("Incomplete results on page {}", page);
-                                    }
-                                    return Flux.fromIterable(response.items());
-                                })
+                                .flatMapMany(response -> Flux.fromIterable(response.items()))
                                 .onErrorResume(error -> {
                                     logger.error("Failed to fetch page {}: {}", page, error.getMessage());
-                                    return Flux.empty(); // skip failed page, keep going
+                                    return Flux.error(error);
                                 })
                 );
     }
