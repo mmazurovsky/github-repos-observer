@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Order(-2) // Ensures high precedence
+// INFO: this handling errors approach discussed here: https://www.baeldung.com/spring-webflux-errors
 public class GlobalErrorWebExceptionHandler implements ErrorWebExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalErrorWebExceptionHandler.class);
     private final ObjectMapper objectMapper;
