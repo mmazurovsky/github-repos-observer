@@ -4,8 +4,6 @@ import com.mmazurovsky.redcarecase.dto.external.GithubRepositorySearchResponse;
 import com.mmazurovsky.redcarecase.dto.in.RepositoriesSearchIn;
 import reactor.core.publisher.Mono;
 
-import java.util.Optional;
-
 public interface GithubClient {
     Mono<GithubRepositorySearchResponse> searchRepositories(
             RepositoriesSearchIn request,

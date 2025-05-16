@@ -4,16 +4,12 @@ import com.mmazurovsky.redcarecase.dto.external.GithubRepositoryItemResponse;
 import com.mmazurovsky.redcarecase.dto.out.RepositoriesSearchOut;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
-import java.util.Optional;
 
 @Service
 public class ScoringServiceImpl implements ScoringService {
@@ -34,8 +30,7 @@ public class ScoringServiceImpl implements ScoringService {
                 repositoryItem.updatedAt()
         );
 
-        final Optional<LocalDate> created = repositoryItem.created()
-                .map(OffsetDateTime::toLocalDate);
+        final LocalDate created = repositoryItem.created() != null ? repositoryItem.created().toLocalDate() : null;
 
         return new RepositoriesSearchOut(
                 repositoryItem.name(),

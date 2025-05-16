@@ -37,6 +37,7 @@ dependencies {
     testImplementation("io.projectreactor:reactor-test")
     // Other
     implementation("io.netty:netty-resolver-dns-native-macos:4.1.107.Final:osx-aarch_64")
+    implementation("org.jetbrains:annotations:24.1.0")
 }
 
 tasks.withType<Test> {

@@ -1,9 +1,10 @@
 package com.mmazurovsky.redcarecase.dto.external;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jetbrains.annotations.Nullable;
+
 
 import java.time.OffsetDateTime;
-import java.util.Optional;
 
 public record GithubRepositoryItemResponse(
         long id,
@@ -19,7 +20,7 @@ public record GithubRepositoryItemResponse(
         @JsonProperty("updated_at")
         String updatedAt,
         @JsonProperty("language")
-        Optional<String> language,
+        @Nullable String language,
         @JsonProperty("created_at")
-        Optional<OffsetDateTime> created
+        @Nullable OffsetDateTime created
 ) {}

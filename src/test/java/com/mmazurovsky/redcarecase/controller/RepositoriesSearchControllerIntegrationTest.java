@@ -12,9 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.annotation.Order;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -81,11 +78,11 @@ class RepositoriesSearchControllerIntegrationTest {
                     assertThat(list).isNotEmpty();
                     assertThat(list.getFirst().popularityScore()).isGreaterThan(0.0);
                     list.forEach(item -> {
-                        if (item.language().isPresent()) {
-                            assertTrue(item.language().get().toLowerCase().contains(lang));
+                        if (item.language() != null) {
+                            assertTrue(item.language().toLowerCase().contains(lang));
                         }
-                        if (item.created().isPresent()) {
-                            assertTrue(item.created().get().isAfter(date));
+                        if (item.created() != null) {
+                            assertTrue(item.created().isAfter(date));
                         }
                     });
                 });

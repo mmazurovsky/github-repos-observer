@@ -2,10 +2,10 @@ package com.mmazurovsky.redcarecase.dto.in;
 
 import com.mmazurovsky.redcarecase.util.Const;
 import jakarta.validation.constraints.*;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 public record RepositoriesSearchIn(
         @Size(min = 1, max = 50, message = Const.MSG_KEYWORDS_LENGTH)
@@ -13,15 +13,20 @@ public record RepositoriesSearchIn(
         String keywords,
 
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        Optional<@Past(message = Const.MSG_EARLIEST_DATE_PAST) LocalDate> earliestCreatedDate,
+        @Past(message = Const.MSG_EARLIEST_DATE_PAST)
+        @Nullable
+        LocalDate earliestCreatedDate,
 
-        Optional<
-                @Size(min = 1, message = Const.MSG_LANGUAGE_LENGTH)
-                @Pattern(
+        @Size(min = 1, message = Const.MSG_LANGUAGE_LENGTH)
+        @Pattern(
                 regexp = Const.REGEX_LANGUAGE,
                 message = Const.MSG_LANGUAGE_PATTERN
-        ) String> language,
+        )
+        @Nullable
+        String language,
 
-        Optional<@Max(value = 10, message = Const.MSG_MAX_PAGES) Integer> maxPages
+        @Max(value = 10, message = Const.MSG_MAX_PAGES)
+        @Nullable
+        Integer maxPages
 ) {
 }

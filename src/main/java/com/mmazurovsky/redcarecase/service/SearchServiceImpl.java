@@ -25,7 +25,8 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public Flux<GithubRepositoryItemResponse> searchRepositories(RepositoriesSearchIn request) {
-        final int maxPages = request.maxPages().orElse(5);
+        // INFO: use 5 as default
+        final int maxPages = request.maxPages() != null ? request.maxPages() : 5;
 
         return Flux.create(sink -> {
             List<GithubRepositoryItemResponse> buffer = new ArrayList<>();

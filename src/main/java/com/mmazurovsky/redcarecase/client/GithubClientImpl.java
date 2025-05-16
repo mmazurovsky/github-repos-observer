@@ -4,7 +4,6 @@ import com.mmazurovsky.redcarecase.dto.external.GithubRepositorySearchResponse;
 import com.mmazurovsky.redcarecase.dto.in.RepositoriesSearchIn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
@@ -17,7 +16,6 @@ import org.springframework.http.HttpStatus;
 
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 @Component
@@ -101,15 +99,15 @@ public class GithubClientImpl implements GithubClient {
         // Add search keywords
         queryBuilder.append(request.keywords());
 
-        if (request.language().isPresent()) {
+        if (request.language() != null) {
             // Add language filter
-            queryBuilder.append("+language:").append(request.language().get());
+            queryBuilder.append("+language:").append(request.language());
         }
 
         final var earliestCreatedDate = request.earliestCreatedDate();
-        if (earliestCreatedDate.isPresent()) {
+        if (earliestCreatedDate != null) {
             // Add created date filter
-            final String formattedDate = earliestCreatedDate.get()
+            final String formattedDate = earliestCreatedDate
                     .format(DateTimeFormatter.ISO_DATE);
             queryBuilder.append("+created:>=").append(formattedDate);
         }
