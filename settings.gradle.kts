@@ -1,1 +1,1 @@
-rootProject.name = "redcare-case"
+rootProject.name = "github_repos_observer"

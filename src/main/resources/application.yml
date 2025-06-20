@@ -1,6 +1,6 @@
 spring:
   application:
-    name: redcare-case
+    name: github_repos_observer
 
   main:
     banner-mode: off
@@ -15,7 +15,7 @@ logging:
     root: INFO
     reactor.netty: WARN
     org.springframework.web: WARN
-    com.mmazurovsky.redcarecase: DEBUG
+    com.mmazurovsky.githubreposobserver: DEBUG
 
 # GitHub API Configuration (replace with your token)
 github:
