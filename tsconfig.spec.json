@@ -15,4 +15,4 @@
     "tests/unit/**/*.spec.ts",
     "src/**/*.d.ts"
   ]
-}
+} 
