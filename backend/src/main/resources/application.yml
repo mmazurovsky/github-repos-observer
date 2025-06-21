@@ -13,11 +13,11 @@ spring:
 logging:
   level:
     root: INFO
-    reactor.netty: WARN
-    org.springframework.web: WARN
-    com.mmazurovsky.githubreposobserver: DEBUG
+    "[reactor.netty]": WARN
+    "[org.springframework.web]": WARN
+    "[com.mmazurovsky.githubreposobserver]": DEBUG
 
-# GitHub API Configuration (replace with your token)
+# GitHub API Configuration
 github:
   api:
     token: ${GITHUB_API_TOKEN}
