@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "angular.ng-template",
+    "ms-vscode.vscode-typescript-next",
+    "ms-playwright.playwright",
+    "vscjava.vscode-java-pack",
+    "vscjava.vscode-gradle",
+    "redhat.java",
+    "EditorConfig.EditorConfig",
+    "ms-vscode.vscode-json"
+  ]
+} 

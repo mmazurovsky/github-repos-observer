@@ -1,0 +1,35 @@
+<div>
+  <div>
+    <h3>
+      <a [href]="item.url" target="_blank" rel="noopener noreferrer">
+        {{ item.name }}
+      </a>
+    </h3>
+    <span *ngIf="item.language">
+      {{ item.language }}
+    </span>
+  </div>
+
+  <div>
+    <div>
+      <p>{{ item.stars }}</p>
+      <p>Stars</p>
+    </div>
+    <div>
+      <p>{{ item.forks }}</p>
+      <p>Forks</p>
+    </div>
+    <div>
+      <p>{{ item.recency }}</p>
+      <p>Recency</p>
+    </div>
+    <div>
+      <p>{{ item.popularityScore | number:'1.2-2' }}</p>
+      <p>Score</p>
+    </div>
+  </div>
+
+  <div *ngIf="item.created">
+    <span>Created on: {{ item.created | date:'longDate' }}</span>
+  </div>
+</div>

@@ -1,0 +1,55 @@
+<div>
+  <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+    <div>
+      <!-- Keywords -->
+      <div>
+        <label for="keywords">Keywords</label>
+        <input id="keywords" type="text" formControlName="keywords"
+               placeholder="e.g., 'typescript', 'java', 'ai'">
+        <div *ngIf="searchForm.get('keywords')?.invalid && searchForm.get('keywords')?.touched">
+          Keywords are required (max 50 chars).
+        </div>
+      </div>
+
+      <!-- Search Button -->
+      <button type="submit" [disabled]="searchForm.invalid">
+        Search
+      </button>
+    </div>
+
+    <!-- Optional Fields Toggle -->
+    <div>
+      <button type="button" (click)="toggleOptionalFields()">
+        {{ showOptionalFields ? 'Hide' : 'Show' }} Optional Filters
+      </button>
+    </div>
+
+    <!-- Optional Fields Container -->
+    <div *ngIf="showOptionalFields">
+      <!-- Language -->
+      <div>
+        <label for="language">Language <span>(Optional)</span></label>
+        <input id="language" type="text" formControlName="language"
+               placeholder="e.g., 'javascript'">
+        <div *ngIf="searchForm.get('language')?.invalid && searchForm.get('language')?.touched">
+          Invalid language format.
+        </div>
+      </div>
+
+      <!-- Earliest Created Date -->
+      <div>
+        <label for="earliestCreatedDate">Created After <span>(Optional)</span></label>
+        <input id="earliestCreatedDate" type="date" formControlName="earliestCreatedDate">
+      </div>
+
+      <!-- Max Pages -->
+      <div>
+        <label for="maxPages">Result Pages <span>(1-10)</span></label>
+        <input id="maxPages" type="number" formControlName="maxPages">
+        <div *ngIf="searchForm.get('maxPages')?.invalid && searchForm.get('maxPages')?.touched">
+          Must be between 1 and 10.
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

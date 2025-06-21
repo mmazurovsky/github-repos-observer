@@ -1,0 +1,28 @@
+{
+    "java.compile.nullAnalysis.mode": "automatic",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/.angular": true,
+        "**/.gradle": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/.angular": true
+    },
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "prettier.configPath": ".prettierrc",
+    "eslint.workingDirectories": ["frontend"],
+    "typescript.workspaceSymbols.scope": "currentProject"
+}

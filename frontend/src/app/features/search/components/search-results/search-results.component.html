@@ -1,0 +1,19 @@
+<div *ngIf="(results$ | async) as results">
+  <div *ngIf="results.length > 0; else noResults">
+    <app-search-result-item
+      *ngFor="let item of results"
+      [item]="item"
+    ></app-search-result-item>
+  </div>
+  <ng-template #noResults>
+    <div>No repositories found.</div>
+  </ng-template>
+</div>
+
+<div *ngIf="(loading$ | async)">
+  Loading...
+</div>
+
+<div *ngIf="(error$ | async) as error">
+  Error: {{ error }}
+</div>

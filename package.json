@@ -1,0 +1,46 @@
+{
+  "name": "github-repos-observer",
+  "version": "1.0.0",
+  "description": "A monorepo for GitHub repository search and scoring application",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd backend && ./gradlew build --exclude-task test",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && ./gradlew bootRun",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && ./gradlew build",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && ./gradlew test",
+    "test:e2e": "cd frontend && npm run e2e",
+    "clean": "npm run clean:frontend && npm run clean:backend",
+    "clean:frontend": "cd frontend && rm -rf dist node_modules",
+    "clean:backend": "cd backend && ./gradlew clean",
+    "lint": "npm run lint:frontend",
+    "lint:frontend": "cd frontend && ng lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.1.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mmazurovsky/github-repos-observer"
+  },
+  "keywords": ["monorepo", "angular", "spring-boot", "github", "search"],
+  "author": "mmazurovsky",
+  "license": "MIT"
+} 

@@ -1,0 +1,21 @@
+<div>
+  <app-search-bar (search)="handleSearch($event)"></app-search-bar>
+
+  <div>
+    <!-- Loading Indicator -->
+    <div *ngIf="(state.loading$ | async)">
+      <div>Loading...</div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="(state.error$ | async) as error">
+      <strong>Error:</strong>
+      <span>{{ error }}</span>
+    </div>
+
+    <!-- Results -->
+    <div *ngIf="!(state.loading$ | async) && !(state.error$ | async)">
+      <app-search-results></app-search-results>
+    </div>
+  </div>
+</div>
