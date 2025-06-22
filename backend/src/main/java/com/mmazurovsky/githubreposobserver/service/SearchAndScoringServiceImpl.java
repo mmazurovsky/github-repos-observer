@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositoryItemResponse;
+import com.mmazurovsky.githubreposobserver.dto.GithubRepositorySearchResults;
 import com.mmazurovsky.githubreposobserver.dto.in.RepositoriesSearchIn;
 import com.mmazurovsky.githubreposobserver.dto.out.RepositoriesSearchOut;
 
@@ -20,7 +20,7 @@ public class SearchAndScoringServiceImpl implements SearchAndScoringService {
 
     @Override
     public List<RepositoriesSearchOut> searchAndOutputRepositoriesWithScores(RepositoriesSearchIn request) {
-        final List<GithubRepositoryItemResponse> found = searchService.searchRepositories(request);
-        return scoringService.convertAndEnrichWithScoreMany(found);
+        final GithubRepositorySearchResults searchResults = searchService.searchRepositories(request);
+        return scoringService.convertAndEnrichWithScoreMany(searchResults);
     }
 }

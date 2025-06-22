@@ -18,6 +18,20 @@ import com.mmazurovsky.githubreposobserver.dto.in.RepositoriesSearchIn;
 
 @Component
 public class GithubClientImpl implements GithubClient {
+
+    // Static exception variables with generic messages - never expose internal details to clients
+    public static final ResponseStatusException GITHUB_4XX_CLIENT_ERROR_EXCEPTION =
+        new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Invalid search request");
+
+    public static final ResponseStatusException GITHUB_5XX_SERVER_ERROR_EXCEPTION =
+        new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Search service temporarily unavailable");
+
+    public static final ResponseStatusException GITHUB_CONNECTION_ERROR_EXCEPTION =
+        new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Cannot connect to search service");
+
+    public static final ResponseStatusException GITHUB_CLIENT_FAILURE_EXCEPTION =
+        new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Search operation failed");
+
     private final WebClient githubWebClient;
 
     private static final Logger logger = LoggerFactory.getLogger(GithubClientImpl.class);
@@ -30,102 +44,75 @@ public class GithubClientImpl implements GithubClient {
     public GithubRepositorySearchResponse searchRepositories(
             RepositoriesSearchIn request,
             int page,
-            int perPage
+            int perPage,
+            String sort,
+            String order
     ) {
         final String queryString = buildQueryString(request);
 
         int retryCount = 0;
         final int maxRetries = 3;
 
-        while (retryCount <= maxRetries) {
+        while (retryCount < maxRetries) {
             try {
                 return githubWebClient.get()
                         .uri(uriBuilder -> uriBuilder
                                 .path("/search/repositories")
                                 .queryParam("q", queryString)
-                                .queryParam("sort", "stars")
-                                .queryParam("order", "desc")
+                                .queryParam("sort", sort)
+                                .queryParam("order", order)
                                 .queryParam("page", page)
                                 .queryParam("per_page", perPage)
                                 .build(true))
                         .retrieve()
-                        .onStatus(
-                                status -> status.value() == 422,
-                                response -> response.bodyToMono(String.class).flatMap(body -> {
-                                    logger.warn("Page {} can't be processed (422), returning empty result", page);
-                                    return reactor.core.publisher.Mono.error(new ResponseStatusException(HttpStatus.NO_CONTENT, "Page can't be processed"));
-                                })
-                        )
-                        .onStatus(
-                                status -> status.is4xxClientError(),
-                                response -> response.bodyToMono(String.class).flatMap(errorBody -> {
-                                    logger.error("4xx error from GitHub for page {}: {}", page, errorBody);
-                                    return reactor.core.publisher.Mono.error(new ResponseStatusException(
-                                            HttpStatus.INTERNAL_SERVER_ERROR,
-                                            "Application error when requesting GitHub API"
-                                    ));
-                                })
-                        )
-                        .onStatus(
-                                status -> status.is5xxServerError(),
-                                response -> response.bodyToMono(String.class).flatMap(errorBody -> {
-                                    logger.error("5xx error from GitHub for page {}: {}", page, errorBody);
-                                    return reactor.core.publisher.Mono.error(new WebClientResponseException(
-                                            response.statusCode().value(),
-                                            "GitHub server error",
-                                            null,
-                                            errorBody.getBytes(),
-                                            null
-                                    ));
-                                })
-                        )
                         .bodyToMono(GithubRepositorySearchResponse.class)
                         .block(Duration.ofSeconds(30));
 
             } catch (WebClientResponseException ex) {
-                if (ex.getStatusCode().value() == 422) {
-                    // Return empty response for 422 errors
-                    logger.warn("Page {} can't be processed (422), returning empty result", page);
+                int statusCode = ex.getStatusCode().value();
+
+                if (statusCode == 422) {
+                    // Return empty response for 422 errors - this is expected behavior
+                    logger.info("Page {} returned 422 (Unprocessable Entity), returning empty result gracefully", page);
                     return new GithubRepositorySearchResponse(0, false, List.of());
+                }
+
+                if (ex.getStatusCode().is4xxClientError()) {
+                    logger.error("4xx error from GitHub for page {}: status={}, message={}", page, statusCode, ex.getMessage());
+                    throw GITHUB_4XX_CLIENT_ERROR_EXCEPTION;
                 }
 
                 if (ex.getStatusCode().is5xxServerError() && retryCount < maxRetries) {
                     retryCount++;
-                    logger.warn("Retrying page {} due to server error (attempt {}/{}): {}",
-                               page, retryCount, maxRetries, ex.getMessage());
+                    logger.warn("Retrying page {} due to server error (attempt {}/{}): status={}, message={}",
+                               page, retryCount, maxRetries, statusCode, ex.getMessage());
                     try {
                         Thread.sleep(400 * retryCount); // Exponential backoff
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Request interrupted", ie);
+                        logger.warn("Request interrupted during retry backoff for page {}, returning empty result gracefully", page);
+                        // Return empty response instead of throwing exception
+                        return new GithubRepositorySearchResponse(0, false, List.of());
                     }
                     continue;
                 }
 
-                throw new ResponseStatusException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "GitHub API error: " + ex.getMessage(),
-                        ex
-                );
+                // For 5xx server errors when retries are exhausted
+                logger.error("5xx server error from GitHub for page {} (retries exhausted): status={}, message={}",
+                           page, statusCode, ex.getMessage());
+                throw GITHUB_5XX_SERVER_ERROR_EXCEPTION;
             } catch (WebClientRequestException ex) {
-                throw new ResponseStatusException(
-                        HttpStatus.SERVICE_UNAVAILABLE,
-                        "GitHub connection error",
-                        ex
-                );
+                logger.error("WebClientRequestException occurred for page {}: {}", page, ex.getMessage());
+                throw GITHUB_CONNECTION_ERROR_EXCEPTION;
             } catch (Exception ex) {
-                throw new ResponseStatusException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "GitHub client failure",
-                        ex
-                );
+                logger.error("Unexpected exception occurred for page {}: {}", page, ex.getMessage(), ex);
+                throw GITHUB_CLIENT_FAILURE_EXCEPTION;
             }
         }
 
-        throw new ResponseStatusException(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Retries exhausted after server errors for page " + page
-        );
+        logger.warn("All retries exhausted for page {} after {} attempts, returning empty result gracefully", page, maxRetries);
+        // Return empty response instead of throwing exception for retry exhaustion
+        return new GithubRepositorySearchResponse(0, false, List.of());
     }
 
     private String buildQueryString(RepositoriesSearchIn request) {
@@ -151,3 +138,4 @@ public class GithubClientImpl implements GithubClient {
         return queryBuilder.toString();
     }
 }
+

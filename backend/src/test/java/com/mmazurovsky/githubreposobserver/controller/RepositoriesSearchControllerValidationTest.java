@@ -88,7 +88,7 @@ public class RepositoriesSearchControllerValidationTest {
     @Test
     void whenAllValid_thenPasses() throws Exception {
         // Mock service response
-        RepositoriesSearchOut mockResult = new RepositoriesSearchOut("repo", "url", null, null, 1, 1, "recent", 1);
+        RepositoriesSearchOut mockResult = new RepositoriesSearchOut("repo", "url", null, null, 1, 1, "recent", "8.5");
         Mockito.when(searchAndScoringService.searchAndOutputRepositoriesWithScores(Mockito.any()))
                 .thenReturn(List.of(mockResult));
 
@@ -105,7 +105,7 @@ public class RepositoriesSearchControllerValidationTest {
     @Test
     void whenOnlyKeywordsProvided_thenPasses() throws Exception {
         // Mock service response
-        RepositoriesSearchOut mockResult = new RepositoriesSearchOut("repo", "url", null, null, 1, 1, "recent", 1);
+        RepositoriesSearchOut mockResult = new RepositoriesSearchOut("repo", "url", null, null, 1, 1, "recent", "7.2");
         Mockito.when(searchAndScoringService.searchAndOutputRepositoriesWithScores(Mockito.any()))
                 .thenReturn(List.of(mockResult));
 

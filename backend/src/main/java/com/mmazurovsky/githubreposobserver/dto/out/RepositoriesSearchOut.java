@@ -1,8 +1,8 @@
 package com.mmazurovsky.githubreposobserver.dto.out;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.time.LocalDate;
+
+import org.jetbrains.annotations.Nullable;
 
 public record RepositoriesSearchOut(
         String name,
@@ -12,6 +12,6 @@ public record RepositoriesSearchOut(
         int stars,
         int forks,
         String recency,
-        int popularityScore
+        String popularityScore
 ) {
 }

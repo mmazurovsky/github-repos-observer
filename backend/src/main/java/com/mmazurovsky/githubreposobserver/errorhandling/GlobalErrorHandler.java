@@ -1,6 +1,7 @@
 package com.mmazurovsky.githubreposobserver.errorhandling;
 
 import java.util.Objects;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -28,6 +29,20 @@ public class GlobalErrorHandler {
 
         ErrorResponse errorResponse = new ErrorResponse(errorMessage);
         return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    @ExceptionHandler(CompletionException.class)
+    public ResponseEntity<ErrorResponse> handleCompletionException(CompletionException ex) {
+        // Unwrap the underlying cause and handle it as if it was thrown directly
+        Throwable cause = ex.getCause();
+        if (cause instanceof ResponseStatusException rse) {
+            return handleResponseStatusException(rse);
+        } else {
+            // For non-ResponseStatusException causes, treat as generic error
+            logger.error("Unexpected error in async operation", ex);
+            ErrorResponse errorResponse = new ErrorResponse("Unexpected error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 
     @ExceptionHandler(ResponseStatusException.class)

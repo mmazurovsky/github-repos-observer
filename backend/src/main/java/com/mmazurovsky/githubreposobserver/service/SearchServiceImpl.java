@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.mmazurovsky.githubreposobserver.client.GithubClient;
+import com.mmazurovsky.githubreposobserver.dto.GithubRepositorySearchResults;
 import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositoryItemResponse;
 import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositorySearchResponse;
 import com.mmazurovsky.githubreposobserver.dto.in.RepositoriesSearchIn;
@@ -30,32 +31,118 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    public List<GithubRepositoryItemResponse> searchRepositories(RepositoriesSearchIn request) {
+    public GithubRepositorySearchResults searchRepositories(RepositoriesSearchIn request) {
         int maxPages = request.maxPages() != null ? request.maxPages() : 5;
 
-        // Use virtual threads to fetch all pages concurrently
-        List<CompletableFuture<List<GithubRepositoryItemResponse>>> pageFutures = IntStream.rangeClosed(1, maxPages)
-                .mapToObj(page -> CompletableFuture.supplyAsync(() -> {
-                    try {
-                        GithubRepositorySearchResponse response = githubRepositoryClient.searchRepositories(request, page, RESULTS_PER_PAGE);
-                        return response.items();
-                    } catch (Exception error) {
-                        logger.error("Failed to fetch page {}: {}", page, error.getMessage());
-                        return List.<GithubRepositoryItemResponse>of(); // Return empty list on error
-                    }
-                }, virtualThreadExecutor))
-                .toList();
+        // Create futures for the 4 different search requests
+        CompletableFuture<Integer> minStarsFuture = CompletableFuture.supplyAsync(() ->
+            getMinStars(request), virtualThreadExecutor);
 
-        // Collect all results
+        CompletableFuture<Integer> minForksFuture = CompletableFuture.supplyAsync(() ->
+            getMinForks(request), virtualThreadExecutor);
+
+        CompletableFuture<Integer> maxStarsFuture = CompletableFuture.supplyAsync(() ->
+            getMaxStars(request), virtualThreadExecutor);
+
+        CompletableFuture<List<GithubRepositoryItemResponse>> repositoriesFuture = CompletableFuture.supplyAsync(() ->
+            getRepositoriesWithMaxForks(request, maxPages), virtualThreadExecutor);
+
+        // Wait for all futures to complete - let any exceptions propagate
+        int minStars = minStarsFuture.join();
+        int minForks = minForksFuture.join();
+        int maxStars = maxStarsFuture.join();
+        List<GithubRepositoryItemResponse> repositories = repositoriesFuture.join();
+
+        // Get maxForks from the repositories we fetched (desc order by forks)
+        int maxForks = repositories.isEmpty() ? 0 : repositories.get(0).forksCount();
+
+        logger.info("Search results: minStars={}, maxStars={}, minForks={}, maxForks={}, repositories={}",
+                   minStars, maxStars, minForks, maxForks, repositories.size());
+
+        return new GithubRepositorySearchResults(minStars, maxStars, minForks, maxForks, repositories);
+    }
+
+    private int getMinStars(RepositoriesSearchIn request) {
+        // 1. order is asc, sort is stars - to get minStars from first item
+        RepositoriesSearchIn minStarsRequest = new RepositoriesSearchIn(
+            request.keywords(),
+            request.earliestCreatedDate(),
+            request.language(),
+            1 // Only need 1 page
+        );
+
+        GithubRepositorySearchResponse response = githubRepositoryClient.searchRepositories(
+            minStarsRequest, 1, 1, "stars", "asc"
+        );
+
+        if (!response.items().isEmpty()) {
+            int minStars = response.items().get(0).stargazersCount();
+            logger.debug("MinStars found: {}", minStars);
+            return minStars;
+        }
+        return 0;
+    }
+
+    private int getMinForks(RepositoriesSearchIn request) {
+        // 2. order is asc, sort is forks - to get minForks from first item
+        RepositoriesSearchIn minForksRequest = new RepositoriesSearchIn(
+            request.keywords(),
+            request.earliestCreatedDate(),
+            request.language(),
+            1 // Only need 1 page
+        );
+
+        GithubRepositorySearchResponse response = githubRepositoryClient.searchRepositories(
+            minForksRequest, 1, 1, "forks", "asc"
+        );
+
+        if (!response.items().isEmpty()) {
+            int minForks = response.items().get(0).forksCount();
+            logger.debug("MinForks found: {}", minForks);
+            return minForks;
+        }
+        return 0;
+    }
+
+    private int getMaxStars(RepositoriesSearchIn request) {
+        // 3. order is desc, sort is stars - to get maxStars from first item
+        RepositoriesSearchIn maxStarsRequest = new RepositoriesSearchIn(
+            request.keywords(),
+            request.earliestCreatedDate(),
+            request.language(),
+            1 // Only need 1 page
+        );
+
+        GithubRepositorySearchResponse response = githubRepositoryClient.searchRepositories(
+            maxStarsRequest, 1, 1, "stars", "desc"
+        );
+
+        if (!response.items().isEmpty()) {
+            int maxStars = response.items().get(0).stargazersCount();
+            logger.debug("MaxStars found: {}", maxStars);
+            return maxStars;
+        }
+        return 0;
+    }
+
+    private List<GithubRepositoryItemResponse> getRepositoriesWithMaxForks(RepositoriesSearchIn request, int maxPages) {
+        // 4. order is desc, sort is forks - fetch maxPages amount of pages
+        List<CompletableFuture<List<GithubRepositoryItemResponse>>> pageFutures = IntStream.rangeClosed(1, maxPages)
+            .mapToObj(page -> CompletableFuture.supplyAsync(() -> {
+                GithubRepositorySearchResponse response = githubRepositoryClient.searchRepositories(
+                    request, page, RESULTS_PER_PAGE, "forks", "desc"
+                );
+                return response.items();
+            }, virtualThreadExecutor))
+            .toList();
+
+        // Collect all results - let any exceptions propagate
         List<GithubRepositoryItemResponse> allItems = new ArrayList<>();
         for (CompletableFuture<List<GithubRepositoryItemResponse>> future : pageFutures) {
-            try {
-                allItems.addAll(future.join());
-            } catch (Exception error) {
-                logger.error("Error collecting page results: {}", error.getMessage());
-            }
+            allItems.addAll(future.join());
         }
 
+        logger.debug("Repositories fetched: {}", allItems.size());
         return allItems;
     }
 }

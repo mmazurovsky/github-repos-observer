@@ -7,6 +7,8 @@ public interface GithubClient {
     GithubRepositorySearchResponse searchRepositories(
             RepositoriesSearchIn request,
             int page,
-            int perPage
+            int perPage,
+            String sort,
+            String order
     );
 }
