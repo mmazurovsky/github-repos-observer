@@ -1,0 +1,85 @@
+<form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="search-form">
+  <!-- Main Search Section -->
+  <div class="main-search">
+    <!-- Keywords -->
+    <mat-form-field appearance="outline" class="keywords-field">
+      <mat-label>Keywords</mat-label>
+      <input
+        matInput
+        formControlName="keywords"
+        placeholder="e.g., 'typescript', 'java', 'ai'"
+      />
+      <mat-icon matSuffix>search</mat-icon>
+      <mat-error
+        *ngIf="
+          searchForm.get('keywords')?.invalid &&
+          searchForm.get('keywords')?.touched
+        "
+      >
+        Keywords are required (max 50 chars)
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Search Button -->
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      [disabled]="searchForm.invalid"
+      class="search-button"
+    >
+      <mat-icon>search</mat-icon>
+      Search
+    </button>
+  </div>
+
+  <!-- Optional Fields Expansion Panel -->
+  <mat-expansion-panel class="optional-filters">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <mat-icon>filter_list</mat-icon>
+        Optional Filters
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+
+    <div class="optional-fields">
+      <!-- Language -->
+      <mat-form-field appearance="outline">
+        <mat-label>Language</mat-label>
+        <input
+          matInput
+          formControlName="language"
+          placeholder="e.g., 'javascript'"
+        />
+        <mat-error
+          *ngIf="
+            searchForm.get('language')?.invalid &&
+            searchForm.get('language')?.touched
+          "
+        >
+          Invalid language format
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Earliest Created Date -->
+      <mat-form-field appearance="outline">
+        <mat-label>Created After</mat-label>
+        <input matInput type="date" formControlName="earliestCreatedDate" />
+      </mat-form-field>
+
+      <!-- Max Pages -->
+      <mat-form-field appearance="outline">
+        <mat-label>Result Pages (1-5)</mat-label>
+        <input matInput type="number" formControlName="maxPages" />
+        <mat-error
+          *ngIf="
+            searchForm.get('maxPages')?.invalid &&
+            searchForm.get('maxPages')?.touched
+          "
+        >
+          Must be between 1 and 10
+        </mat-error>
+      </mat-form-field>
+    </div>
+  </mat-expansion-panel>
+</form>

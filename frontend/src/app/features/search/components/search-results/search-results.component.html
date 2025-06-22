@@ -1,0 +1,16 @@
+<div *ngIf="results$ | async as results" class="results-container">
+  <div *ngIf="results.length > 0; else noResults" class="results-list">
+    <h2>Search Results ({{ results.length }} repositories)</h2>
+    <app-search-result-item
+      *ngFor="let item of results; trackBy: trackByName"
+      [item]="item"
+    ></app-search-result-item>
+  </div>
+  <ng-template #noResults>
+    <div *ngIf="hasSearched$ | async" class="no-results">
+      <mat-icon>search_off</mat-icon>
+      <h3>No repositories found</h3>
+      <p>Try adjusting your search criteria or keywords.</p>
+    </div>
+  </ng-template>
+</div>

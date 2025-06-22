@@ -1,39 +1,51 @@
-HELP.md
-.gradle
+# Common IDE files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Common IDE directories (if not covered by subdirectories)
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Environment files (if you have any at root level)
+.env
+.env.local
+.env.*.local
+
+# Gradle build files (should not be committed)
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+# Node.js dependencies and build artifacts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
+# Build outputs
+dist/
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+target/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+# Coverage reports
+coverage/
+*.lcov
 
-### VS Code ###
-.vscode/
-
-env/
+# IDE specific files that shouldn't be shared
+.vscode/settings.json
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries/
+.idea/shelf/
