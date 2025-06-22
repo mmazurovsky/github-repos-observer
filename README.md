@@ -1,138 +1,195 @@
 # GitHub Repos Observer
 
-A full-stack application for searching and scoring GitHub repositories, built with Angular frontend and Spring Boot backend.
+A full-stack application for searching and scoring GitHub repositories with **GitHub dark theme UI**, built with Angular frontend and Spring Boot backend using **Project Loom Virtual Threads**.
+
+## ✨ Features
+
+- 🔍 **Smart Repository Search** with keywords, language, and date filters
+- ⭐ **Popularity Scoring** based on stars, forks, and recency
+- 🎨 **GitHub Dark Theme** with authentic styling and centered layout
+- ⚡ **High Performance** with Java 21 Virtual Threads and concurrent API calls
+- 🛡️ **Rate Limiting** (0.8 requests/second) with retry logic for 403 errors
+- ⏱️ **Timeout Protection** (2-minute timeout) for long-running searches
+- 📱 **Responsive Design** with Angular Material components
 
 ## 🏗️ Architecture
 
 ```
 github-repos-observer/
-├── frontend/          # Angular 19 application
-├── backend/           # Spring Boot 3.4 application  
-├── docs/             # Documentation
-└── scripts/          # Build and deployment scripts
+├── frontend/          # Angular 19 with Material Design & GitHub dark theme
+├── backend/           # Spring Boot 3.4 with Virtual Threads
+└── start-local.sh     # Docker Compose startup script
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- **Node.js** >= 18.0.0
-- **Java** >= 21
-- **npm** >= 9.0.0
+- **Docker** and **Docker Compose**
+- **Node.js** >= 18.0.0 (for development)
+- **Java** >= 21 (for development)
 
-### Installation
+### Environment Setup
+
+Create the GitHub API token file:
 
 ```bash
-# Install all dependencies
-npm run install:all
-
-# Or install individually
-npm install                    # Root + frontend dependencies
-cd backend && ./gradlew build  # Backend dependencies
+# Create environment file
+mkdir -p backend/env
+echo "GITHUB_API_TOKEN=your_github_token_here" > backend/env/prod.env
 ```
 
-### Development
+### Running with Docker (Recommended)
 
 ```bash
-# Start both frontend and backend in development mode
-npm run dev
+# Start both frontend and backend
+./start-local.sh
 
-# Or start individually
-npm run dev:frontend  # Starts Angular dev server on http://localhost:4200
-npm run dev:backend   # Starts Spring Boot on http://localhost:8080
+# Access the application
+# Frontend: http://localhost:4200
+# Backend:  http://localhost:8080
+```
+
+### Development Mode
+
+```bash
+# Frontend development
+cd frontend
+npm install
+npm start  # http://localhost:4200
+
+# Backend development  
+cd backend
+./gradlew bootRun  # http://localhost:8080
 ```
 
 ### Building
 
 ```bash
-# Build everything
-npm run build
+# Frontend build
+cd frontend && npm run build
 
-# Build individually  
-npm run build:frontend
-npm run build:backend
+# Backend build (includes tests)
+cd backend && ./gradlew build
 ```
 
 ### Testing
 
 ```bash
-# Run all tests
-npm test
+# Frontend tests
+cd frontend
+npm test          # Unit tests (headless)
+npm run e2e       # E2E tests with Playwright
 
-# Run specific test suites
-npm run test:frontend  # Angular unit tests
-npm run test:backend   # Spring Boot tests  
-npm run test:e2e      # Playwright E2E tests
+# Backend tests
+cd backend
+./gradlew test    # Unit and integration tests
+./gradlew build   # Full build with tests
 ```
 
 ## 📁 Project Structure
 
 ### Frontend (Angular 19)
-- **Standalone components** architecture
-- **Reactive forms** for user input
+- **Standalone components** with Angular Material
+- **GitHub dark theme** styling with authentic colors
+- **Reactive forms** with validation (maxPages ≤ 5)
+- **HTTP timeout** protection (2-minute timeout)
 - **RxJS** for state management
 - **Playwright** for E2E testing
-- **Karma/Jasmine** for unit testing
 
 ### Backend (Spring Boot 3.4)
-- **WebFlux** for reactive programming
-- **Spring Retry** for resilient API calls
-- **Validation** for input sanitization
-- **JUnit 5** for testing
+- **Virtual Threads** for high-performance concurrency
+- **Rate limiting** (0.8 requests/second) with exponential backoff
+- **Retry logic** for 403 GitHub API errors
+- **Input validation** (maxPages ≤ 5, keywords 1-50 chars)
+- **Popularity scoring** algorithm for repository ranking
 
 ## 🛠️ Available Scripts
 
+### Docker Commands
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start both frontend and backend |
-| `npm run build` | Build production bundles |
-| `npm test` | Run all tests |
-| `npm run clean` | Clean all build artifacts |
-| `npm run lint` | Run linting |
+| `./start-local.sh` | Start both services with Docker Compose |
+
+### Frontend Commands
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start Angular dev server |
+| `npm run build` | Build for production |
+| `npm test` | Run unit tests (headless) |
+| `npm run e2e` | Run E2E tests with Playwright |
 | `npm run format` | Format code with Prettier |
+
+### Backend Commands
+| Command | Description |
+|---------|-------------|
+| `./gradlew bootRun` | Start Spring Boot dev server |
+| `./gradlew build` | Build and run all tests |
+| `./gradlew test` | Run tests only |
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-Create a `.env` file in the backend directory:
+Create the environment file:
 
 ```bash
+# backend/env/prod.env
 GITHUB_API_TOKEN=your_github_token_here
 ```
 
 ### API Endpoints
 
-- **Frontend**: http://localhost:4200
-- **Backend**: http://localhost:8080
-- **API Docs**: http://localhost:8080/docs (when implemented)
+- **Frontend**: http://localhost:4200 (GitHub dark theme UI)
+- **Backend**: http://localhost:8080 (REST API)
+- **Search API**: `GET /api/search?keywords=...&maxPages=5`
+
+### Search Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `keywords` | String (1-50) | ✅ Yes | Search keywords |
+| `language` | String | ❌ No | Programming language filter |
+| `earliestCreatedDate` | ISO Date | ❌ No | Filter by creation date |
+| `maxPages` | Integer (≤5) | ❌ No | Max GitHub pages to fetch (default: 5) |
 
 ## 🧪 Testing Strategy
 
-- **Unit Tests**: Components, services, and business logic
-- **Integration Tests**: API endpoints and database interactions  
-- **E2E Tests**: Complete user journeys
-- **Test Organization**: Separate `tests/` directory for clean structure
+- **Frontend**: Unit tests (Karma/Jasmine) + E2E tests (Playwright)
+- **Backend**: Unit tests + Integration tests (26 tests total)
+- **Concurrency Testing**: Virtual threads performance validation
+- **Rate Limiting**: 403 error handling and retry logic verification
+- **Timeout Testing**: Long-running request handling
 
 ## 📚 Documentation
 
 - [Frontend Documentation](./frontend/README.md)
 - [Backend Documentation](./backend/README.md)
-- [API Documentation](./docs/api.md) (when available)
-- [Deployment Guide](./docs/deployment.md) (when available)
 
 ## 🚀 Deployment
 
-### Production Build
+### Docker Deployment (Current)
 
 ```bash
-npm run build
+# Start with Docker Compose
+./start-local.sh
+
+# Services will be available at:
+# Frontend: http://localhost:4200
+# Backend:  http://localhost:8080
 ```
 
-### Docker (when implemented)
+### Manual Deployment
 
 ```bash
-docker-compose up --build
+# Build frontend
+cd frontend && npm run build
+
+# Build backend
+cd backend && ./gradlew build
+
+# Run backend
+java -jar backend/build/libs/*.jar
 ```
 
 ## 🤝 Contributing
@@ -150,5 +207,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🔗 Links
 
 - [Angular Documentation](https://angular.io/docs)
+- [Angular Material](https://material.angular.io/)
 - [Spring Boot Documentation](https://spring.io/projects/spring-boot)
+- [Project Loom (Virtual Threads)](https://openjdk.org/projects/loom/)
 - [GitHub API Documentation](https://docs.github.com/en/rest) 
