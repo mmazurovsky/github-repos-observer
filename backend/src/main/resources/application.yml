@@ -6,16 +6,19 @@ spring:
     banner-mode: off
 
   config:
-    import:
-      file:env\prod.env[.properties]
+    import: file:env\prod.env[.properties]
+
+  threads:
+    virtual:
+      enabled: true
 
 # Logging configuration
 logging:
   level:
     root: INFO
-    "[reactor.netty]": WARN
-    "[org.springframework.web]": WARN
-    "[com.mmazurovsky.githubreposobserver]": DEBUG
+    '[reactor.netty]': WARN
+    '[org.springframework.web]': WARN
+    '[com.mmazurovsky.githubreposobserver]': DEBUG
 
 # GitHub API Configuration
 github:

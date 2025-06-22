@@ -1,13 +1,12 @@
 package com.mmazurovsky.githubreposobserver.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositoryItemResponse;
 import com.mmazurovsky.githubreposobserver.dto.in.RepositoriesSearchIn;
 import com.mmazurovsky.githubreposobserver.dto.out.RepositoriesSearchOut;
-import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 @Service
 public class SearchAndScoringServiceImpl implements SearchAndScoringService {
@@ -20,8 +19,8 @@ public class SearchAndScoringServiceImpl implements SearchAndScoringService {
     }
 
     @Override
-    public Flux<RepositoriesSearchOut> searchAndOutputRepositoriesWithScores(RepositoriesSearchIn request) {
-        final Flux<GithubRepositoryItemResponse> found = searchService.searchRepositories(request);
+    public List<RepositoriesSearchOut> searchAndOutputRepositoriesWithScores(RepositoriesSearchIn request) {
+        final List<GithubRepositoryItemResponse> found = searchService.searchRepositories(request);
         return scoringService.convertAndEnrichWithScoreMany(found);
     }
 }

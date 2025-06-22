@@ -1,11 +1,10 @@
 package com.mmazurovsky.githubreposobserver.service;
 
+import java.util.List;
+
 import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositoryItemResponse;
 import com.mmazurovsky.githubreposobserver.dto.out.RepositoriesSearchOut;
-import reactor.core.publisher.Flux;
-
-import java.util.Comparator;
 
 public interface ScoringService {
-    Flux<RepositoriesSearchOut> convertAndEnrichWithScoreMany(Flux<GithubRepositoryItemResponse> repositoryItems);
+    List<RepositoriesSearchOut> convertAndEnrichWithScoreMany(List<GithubRepositoryItemResponse> repositoryItems);
 }

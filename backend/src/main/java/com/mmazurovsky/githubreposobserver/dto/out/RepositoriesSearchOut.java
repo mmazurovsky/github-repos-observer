@@ -12,6 +12,6 @@ public record RepositoriesSearchOut(
         int stars,
         int forks,
         String recency,
-        double popularityScore
+        int popularityScore
 ) {
 }

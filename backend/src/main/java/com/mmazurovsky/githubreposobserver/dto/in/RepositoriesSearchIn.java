@@ -25,7 +25,7 @@ public record RepositoriesSearchIn(
         @Nullable
         String language,
 
-        @Max(value = 10, message = Const.MSG_MAX_PAGES)
+        @Max(value = 20, message = Const.MSG_MAX_PAGES)
         @Nullable
         Integer maxPages
 ) {

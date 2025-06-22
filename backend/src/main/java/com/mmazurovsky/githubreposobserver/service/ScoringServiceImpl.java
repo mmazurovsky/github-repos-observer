@@ -1,30 +1,32 @@
 package com.mmazurovsky.githubreposobserver.service;
 
-import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositoryItemResponse;
-import com.mmazurovsky.githubreposobserver.dto.out.RepositoriesSearchOut;
-import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositoryItemResponse;
+import com.mmazurovsky.githubreposobserver.dto.out.RepositoriesSearchOut;
 
 @Service
 public class ScoringServiceImpl implements ScoringService {
 
     @Override
-    public Flux<RepositoriesSearchOut> convertAndEnrichWithScoreMany(Flux<GithubRepositoryItemResponse> repositoryItems) {
-        return repositoryItems
+    public List<RepositoriesSearchOut> convertAndEnrichWithScoreMany(List<GithubRepositoryItemResponse> repositoryItems) {
+        return repositoryItems.stream()
                 .map(this::convertAndEnrichWithScoreOne)
-                .sort(Comparator.comparingDouble(RepositoriesSearchOut::popularityScore).reversed());
+                .sorted(Comparator.comparingDouble(RepositoriesSearchOut::popularityScore).reversed())
+                .toList();
     }
 
     private RepositoriesSearchOut convertAndEnrichWithScoreOne(GithubRepositoryItemResponse repositoryItem) {
         final String recency = calculateRecency(repositoryItem.updatedAt());
 
-        final double popularityScore = calculatePopularityScore(
+        final int popularityScore = calculatePopularityScore(
                 repositoryItem.stargazersCount(),
                 repositoryItem.forksCount(),
                 repositoryItem.updatedAt()
@@ -59,7 +61,7 @@ public class ScoringServiceImpl implements ScoringService {
         }
     }
 
-    private double calculatePopularityScore(int stars, int forks, String updatedAt) {
+    private int calculatePopularityScore(int stars, int forks, String updatedAt) {
         final ZonedDateTime updatedDateTime = ZonedDateTime.parse(updatedAt);
         final LocalDateTime now = LocalDateTime.now();
 
@@ -73,6 +75,6 @@ public class ScoringServiceImpl implements ScoringService {
         double forkScore = Math.log1p(forks);
 
         // Weighted calculation
-        return (0.5 * starScore + 0.3 * forkScore + 0.2 * recencyFactor) * 10;
+        return (int) Math.round((0.5 * starScore + 0.3 * forkScore + 0.2 * recencyFactor) * 10);
     }
 }

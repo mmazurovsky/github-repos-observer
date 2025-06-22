@@ -1,149 +1,119 @@
 package com.mmazurovsky.githubreposobserver.controller;
 
-import com.mmazurovsky.githubreposobserver.dto.out.RepositoriesSearchOut;
-import com.mmazurovsky.githubreposobserver.service.SearchAndScoringService;
-import com.mmazurovsky.githubreposobserver.util.Const;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Flux;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import java.time.LocalDate;
+import com.mmazurovsky.githubreposobserver.dto.out.RepositoriesSearchOut;
+import com.mmazurovsky.githubreposobserver.service.SearchAndScoringService;
+import com.mmazurovsky.githubreposobserver.util.Const;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient
-@ActiveProfiles("test")
+@WebMvcTest(RepositoriesSearchController.class)
 public class RepositoriesSearchControllerValidationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(RepositoriesSearchControllerValidationTest.class);
 
     @Autowired
-    private WebTestClient webTestClient;
+    private MockMvc mockMvc;
 
-    @MockitoBean
+    @MockBean
     private SearchAndScoringService searchAndScoringService;
 
     @Test
-    void whenKeywordsTooLong_thenValidationFails() {
+    void whenKeywordsTooLong_thenValidationFails() throws Exception {
         String longKeyword = "a".repeat(51);
 
-        webTestClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/api/search")
-                        .queryParam("keywords", longKeyword)
-                        .build())
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.error")
-                .value(Matchers.containsString(Const.MSG_KEYWORDS_LENGTH));
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/search")
+                        .param("keywords", longKeyword))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.error")
+                        .value(Matchers.containsString(Const.MSG_KEYWORDS_LENGTH)));
     }
 
     @Test
-    void whenInvalidPastDateProvided_thenValidationFails() {
+    void whenInvalidPastDateProvided_thenValidationFails() throws Exception {
         String futureDate = LocalDate.now().plusDays(1).toString();
 
-        webTestClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/api/search")
-                        .queryParam("keywords", "java")
-                        .queryParam("earliestCreatedDate", futureDate)
-                        .build())
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.error")
-                .value(Matchers.containsString(Const.MSG_EARLIEST_DATE_PAST));
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/search")
+                        .param("keywords", "java")
+                        .param("earliestCreatedDate", futureDate))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.error")
+                        .value(Matchers.containsString(Const.MSG_EARLIEST_DATE_PAST)));
     }
 
     @Test
-    void whenInvalidLanguage_thenValidationFails() {
-        webTestClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/api/search")
-                        .queryParam("keywords", "java")
-                        .queryParam("language", "java,python")
-                        .build())
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.error")
-                .value(Matchers.containsString(Const.MSG_LANGUAGE_PATTERN));
+    void whenInvalidLanguage_thenValidationFails() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/search")
+                        .param("keywords", "java")
+                        .param("language", "java,python"))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.error")
+                        .value(Matchers.containsString(Const.MSG_LANGUAGE_PATTERN)));
     }
 
     @Test
-    void whenMaxPagesExceeds_thenValidationFails() {
-        webTestClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/api/search")
-                        .queryParam("keywords", "java")
-                        .queryParam("maxPages", 25)
-                        .build())
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.error")
-                .value(Matchers.containsString(Const.MSG_MAX_PAGES));
+    void whenMaxPagesExceeds_thenValidationFails() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/search")
+                        .param("keywords", "java")
+                        .param("maxPages", "25"))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.error")
+                        .value(Matchers.containsString(Const.MSG_MAX_PAGES)));
     }
 
     @Test
-    void whenMaxPagesExceedsAndInvalidLanguage_thenValidationFails() {
-        webTestClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/api/search")
-                        .queryParam("keywords", "java")
-                        .queryParam("language", "java,python")
-                        .queryParam("maxPages", 25)
-                        .build())
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .consumeWith(result -> {
-                    logger.debug(new String(result.getResponseBody()));
-                })
-                .jsonPath("$.error")
-                .value(Matchers.allOf(Matchers.containsString(Const.MSG_MAX_PAGES),
-                        Matchers.containsString(Const.MSG_LANGUAGE_PATTERN)));
-
-
+    void whenMaxPagesExceedsAndInvalidLanguage_thenValidationFails() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/search")
+                        .param("keywords", "java")
+                        .param("language", "java,python")
+                        .param("maxPages", "25"))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.error")
+                        .value(Matchers.allOf(Matchers.containsString(Const.MSG_MAX_PAGES),
+                                Matchers.containsString(Const.MSG_LANGUAGE_PATTERN))));
     }
 
     @Test
-    void whenAllValid_thenPasses() {
+    void whenAllValid_thenPasses() throws Exception {
         // Mock service response
+        RepositoriesSearchOut mockResult = new RepositoriesSearchOut("repo", "url", null, null, 1, 1, "recent", 1);
         Mockito.when(searchAndScoringService.searchAndOutputRepositoriesWithScores(Mockito.any()))
-                .thenReturn(Flux.just(new RepositoriesSearchOut("repo", "url", null, null, 1, 1, "recent", 0.1)));
+                .thenReturn(List.of(mockResult));
 
-        webTestClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/api/search")
-                        .queryParam("keywords", "java")
-                        .queryParam("earliestCreatedDate", "2022-01-01")
-                        .queryParam("language", "Java")
-                        .queryParam("maxPages", 5)
-                        .build())
-                .exchange()
-                .expectStatus().isOk()
-                .expectBodyList(RepositoriesSearchOut.class)
-                .hasSize(1);
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/search")
+                        .param("keywords", "java")
+                        .param("earliestCreatedDate", "2022-01-01")
+                        .param("language", "Java")
+                        .param("maxPages", "5"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
+                .andExpect(MockMvcResultMatchers.jsonPath("$", Matchers.hasSize(1)));
     }
 
     @Test
-    void whenOnlyKeywordsProvided_thenPasses() {
+    void whenOnlyKeywordsProvided_thenPasses() throws Exception {
         // Mock service response
+        RepositoriesSearchOut mockResult = new RepositoriesSearchOut("repo", "url", null, null, 1, 1, "recent", 1);
         Mockito.when(searchAndScoringService.searchAndOutputRepositoriesWithScores(Mockito.any()))
-                .thenReturn(Flux.just(new RepositoriesSearchOut("repo", "url", null, null, 1, 1, "recent", 0.1)));
+                .thenReturn(List.of(mockResult));
 
-        webTestClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/api/search")
-                        .queryParam("keywords", "java")
-                        .build())
-                .exchange()
-                .expectStatus().isOk()
-                .expectBodyList(RepositoriesSearchOut.class)
-                .hasSize(1);
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/search")
+                        .param("keywords", "java"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$").isArray())
+                .andExpect(MockMvcResultMatchers.jsonPath("$", Matchers.hasSize(1)));
     }
 }
 
