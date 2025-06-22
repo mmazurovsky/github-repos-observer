@@ -63,7 +63,7 @@ Query Parameters
 | `keywords`            | String (1–50) | ✅ Yes   | Search keywords                                                       |
 | `earliestCreatedDate` | ISO date      | ❌ No    | Filter for repositories created after this date                       |
 | `language`            | String        | ❌ No    | Programming language (only one)                                       |
-| `maxPages`            | Integer ≤ 10  | ❌ No    | Max number of GitHub result pages to query (100 results per page max) |
+| `maxPages`            | Integer ≤ 5   | ❌ No    | Max number of GitHub result pages to query (100 results per page max) |
 
 ---
 

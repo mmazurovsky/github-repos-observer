@@ -1,20 +1,41 @@
-<div>
-  <app-search-bar (search)="handleSearch($event)"></app-search-bar>
+<div class="search-page">
+  <div class="centered-content">
+    <!-- Search Section -->
+    <div class="search-container">
+      <div class="github-search-section">
+        <div class="search-header">
+          <mat-icon class="search-icon">search</mat-icon>
+          <h1>Search GitHub Repositories</h1>
+          <p class="search-subtitle">
+            Find repositories using keywords, language, and date filters
+          </p>
+        </div>
+        <app-search-bar (search)="handleSearch($event)"></app-search-bar>
+      </div>
+    </div>
 
-  <div>
     <!-- Loading Indicator -->
-    <div *ngIf="state.loading$ | async">
-      <div>Loading...</div>
+    <div *ngIf="state.loading$ | async" class="loading-container">
+      <mat-spinner diameter="50" class="github-spinner"></mat-spinner>
+      <p>Searching repositories...</p>
     </div>
 
     <!-- Error Message -->
-    <div *ngIf="state.error$ | async as error">
-      <strong>Error:</strong>
-      <span>{{ error }}</span>
+    <div *ngIf="state.error$ | async as error" class="error-container">
+      <div class="error-content">
+        <mat-icon class="error-icon">error</mat-icon>
+        <div class="error-text">
+          <strong>Error:</strong>
+          <span>{{ error }}</span>
+        </div>
+      </div>
     </div>
 
     <!-- Results -->
-    <div *ngIf="!(state.loading$ | async) && !(state.error$ | async)">
+    <div
+      *ngIf="!(state.loading$ | async) && !(state.error$ | async)"
+      class="results-wrapper"
+    >
       <app-search-results></app-search-results>
     </div>
   </div>

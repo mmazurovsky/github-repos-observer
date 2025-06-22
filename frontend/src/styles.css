@@ -1,5 +1,63 @@
 /* You can add global styles to this file, and also import other style files */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* GitHub Dark Theme Variables */
+:root {
+  --gh-bg-primary: #0d1117;
+  --gh-bg-secondary: #161b22;
+  --gh-bg-tertiary: #21262d;
+  --gh-border-primary: #30363d;
+  --gh-border-secondary: #21262d;
+  --gh-text-primary: #f0f6fc;
+  --gh-text-secondary: #7d8590;
+  --gh-text-link: #58a6ff;
+  --gh-text-link-hover: #79c0ff;
+  --gh-accent-primary: #238636;
+  --gh-accent-secondary: #1f6feb;
+  --gh-danger: #da3633;
+  --gh-warning: #d29922;
+}
+
+html,
+body {
+  height: 100%;
+  background-color: var(--gh-bg-primary);
+  color: var(--gh-text-primary);
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica,
+    Arial, sans-serif;
+  line-height: 1.5;
+}
+
+/* Custom app styles */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  min-height: 100vh;
+}
+
+.search-section {
+  background: var(--gh-bg-secondary);
+  border: 1px solid var(--gh-border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Center the main content */
+.centered-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.search-container {
+  width: 100%;
+  max-width: 800px;
+}

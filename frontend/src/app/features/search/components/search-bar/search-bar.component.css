@@ -1,0 +1,121 @@
+/* GitHub Dark Theme Search Form */
+.search-form {
+  width: 100%;
+}
+
+.main-search {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.keywords-field {
+  flex: 1;
+  min-width: 300px;
+}
+
+/* GitHub-style search button */
+.search-button {
+  height: 56px;
+  min-width: 140px;
+  background-color: var(--gh-accent-primary) !important;
+  color: white !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  box-shadow:
+    0 1px 0 rgba(27, 31, 36, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+.search-button:hover {
+  background-color: #2ea043 !important;
+}
+
+.search-button:disabled {
+  background-color: var(--gh-bg-tertiary) !important;
+  color: var(--gh-text-secondary) !important;
+}
+
+/* GitHub-style expansion panel */
+.optional-filters {
+  margin-top: 24px;
+  background: var(--gh-bg-tertiary) !important;
+  border: 1px solid var(--gh-border-primary) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+
+.optional-filters .mat-expansion-panel-header {
+  background: var(--gh-bg-tertiary) !important;
+  color: var(--gh-text-primary) !important;
+  border-radius: 6px !important;
+  padding: 16px !important;
+}
+
+.optional-filters .mat-expansion-panel-body {
+  background: var(--gh-bg-tertiary) !important;
+  padding: 0 16px 16px 16px !important;
+}
+
+.optional-filters mat-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gh-text-primary) !important;
+  font-weight: 500;
+}
+
+.optional-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+/* GitHub-style form fields */
+::ng-deep .mat-mdc-form-field {
+  --mdc-filled-text-field-container-color: var(--gh-bg-primary) !important;
+  --mdc-filled-text-field-label-text-color: var(--gh-text-secondary) !important;
+  --mdc-filled-text-field-input-text-color: var(--gh-text-primary) !important;
+  --mdc-outlined-text-field-outline-color: var(--gh-border-primary) !important;
+  --mdc-outlined-text-field-hover-outline-color: var(--gh-text-link) !important;
+  --mdc-outlined-text-field-focus-outline-color: var(--gh-text-link) !important;
+  --mdc-outlined-text-field-label-text-color: var(
+    --gh-text-secondary
+  ) !important;
+  --mdc-outlined-text-field-input-text-color: var(--gh-text-primary) !important;
+}
+
+::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-select-arrow {
+  color: var(--gh-text-link) !important;
+}
+
+::ng-deep .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+  background-color: var(--gh-bg-primary) !important;
+  border-radius: 6px !important;
+}
+
+::ng-deep .mat-error {
+  color: var(--gh-danger) !important;
+}
+
+@media (max-width: 768px) {
+  .main-search {
+    flex-direction: column;
+  }
+
+  .keywords-field {
+    min-width: 100%;
+  }
+
+  .search-button {
+    width: 100%;
+  }
+
+  .optional-fields {
+    grid-template-columns: 1fr;
+  }
+}

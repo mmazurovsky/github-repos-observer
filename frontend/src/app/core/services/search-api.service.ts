@@ -1,16 +1,17 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { RepositoriesSearchOut } from '../models/repositories-search-out.model';
+import { Injectable } from '@angular/core';
+import { Observable, timeout } from 'rxjs';
 import { RepositoriesSearchIn } from '../models/repositories-search-in.model';
+import { RepositoriesSearchOut } from '../models/repositories-search-out.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SearchApiService {
   private readonly API_URL = '/api/search';
+  private readonly REQUEST_TIMEOUT = 120000; // 2 minutes timeout
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   searchRepositories(
     params: RepositoriesSearchIn
@@ -22,8 +23,10 @@ export class SearchApiService {
       }
     });
 
-    return this.http.get<RepositoriesSearchOut[]>(this.API_URL, {
-      params: httpParams,
-    });
+    return this.http
+      .get<RepositoriesSearchOut[]>(this.API_URL, {
+        params: httpParams,
+      })
+      .pipe(timeout(this.REQUEST_TIMEOUT));
   }
 }

@@ -1,0 +1,153 @@
+/* GitHub Repository Card Style */
+.repo-card {
+  margin-bottom: 24px;
+  background: var(--gh-bg-secondary) !important;
+  border: 1px solid var(--gh-border-primary) !important;
+  border-radius: 6px !important;
+  transition: border-color 0.2s ease !important;
+  box-shadow: none !important;
+}
+
+.repo-card:hover {
+  border-color: var(--gh-border-secondary) !important;
+}
+
+/* GitHub-style card header */
+::ng-deep .repo-card .mat-mdc-card-header {
+  padding: 16px 16px 0 16px !important;
+}
+
+::ng-deep .repo-card .mat-mdc-card-title {
+  color: var(--gh-text-primary) !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+  line-height: 1.25 !important;
+}
+
+::ng-deep .repo-card .mat-mdc-card-subtitle {
+  color: var(--gh-text-secondary) !important;
+  font-size: 12px !important;
+  margin: 4px 0 0 0 !important;
+}
+
+::ng-deep .repo-card .mat-mdc-card-content {
+  padding: 16px !important;
+}
+
+.repo-link {
+  color: var(--gh-text-link) !important;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.repo-link:hover {
+  color: var(--gh-text-link-hover) !important;
+  text-decoration: underline;
+}
+
+.language-chip {
+  margin-bottom: 16px;
+}
+
+.language-chip mat-chip-set {
+  margin: 0 !important;
+}
+
+.language-chip mat-chip {
+  background-color: var(--gh-bg-tertiary) !important;
+  color: var(--gh-text-primary) !important;
+  border: 1px solid var(--gh-border-primary) !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+  height: 20px !important;
+  line-height: 18px !important;
+}
+
+.language-chip mat-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  color: var(--gh-text-secondary) !important;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
+.stat-item mat-icon {
+  color: var(--gh-text-secondary);
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--gh-text-primary);
+  line-height: 1.25;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--gh-text-secondary);
+  text-transform: lowercase;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+/* GitHub-style card actions */
+::ng-deep .repo-card .mat-mdc-card-actions {
+  padding: 0 16px 16px 16px !important;
+  margin: 0 !important;
+}
+
+::ng-deep .repo-card .mat-mdc-card-actions .mat-mdc-button {
+  background: var(--gh-bg-tertiary) !important;
+  color: var(--gh-text-primary) !important;
+  border: 1px solid var(--gh-border-primary) !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  padding: 5px 16px !important;
+  min-width: auto !important;
+  height: 28px !important;
+  line-height: 16px !important;
+}
+
+::ng-deep .repo-card .mat-mdc-card-actions .mat-mdc-button:hover {
+  background: var(--gh-bg-primary) !important;
+  border-color: var(--gh-text-secondary) !important;
+}
+
+::ng-deep .repo-card .mat-mdc-card-actions .mat-mdc-button mat-icon {
+  font-size: 12px !important;
+  width: 12px !important;
+  height: 12px !important;
+  margin-right: 4px !important;
+}
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

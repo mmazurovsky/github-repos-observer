@@ -1,11 +1,17 @@
 package com.mmazurovsky.githubreposobserver.dto.in;
 
-import com.mmazurovsky.githubreposobserver.util.Const;
-import jakarta.validation.constraints.*;
+import java.time.LocalDate;
+
 import org.jetbrains.annotations.Nullable;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDate;
+import com.mmazurovsky.githubreposobserver.util.Const;
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public record RepositoriesSearchIn(
         @Size(min = 1, max = 50, message = Const.MSG_KEYWORDS_LENGTH)
@@ -25,7 +31,7 @@ public record RepositoriesSearchIn(
         @Nullable
         String language,
 
-        @Max(value = 20, message = Const.MSG_MAX_PAGES)
+        @Max(value = 5, message = Const.MSG_MAX_PAGES)
         @Nullable
         Integer maxPages
 ) {

@@ -1,82 +1,85 @@
-<div>
-  <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
-    <div>
-      <!-- Keywords -->
-      <div>
-        <label for="keywords">Keywords</label>
-        <input
-          id="keywords"
-          type="text"
-          formControlName="keywords"
-          placeholder="e.g., 'typescript', 'java', 'ai'"
-        />
-        <div
-          *ngIf="
-            searchForm.get('keywords')?.invalid &&
-            searchForm.get('keywords')?.touched
-          "
-        >
-          Keywords are required (max 50 chars).
-        </div>
-      </div>
+<form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="search-form">
+  <!-- Main Search Section -->
+  <div class="main-search">
+    <!-- Keywords -->
+    <mat-form-field appearance="outline" class="keywords-field">
+      <mat-label>Keywords</mat-label>
+      <input
+        matInput
+        formControlName="keywords"
+        placeholder="e.g., 'typescript', 'java', 'ai'"
+      />
+      <mat-icon matSuffix>search</mat-icon>
+      <mat-error
+        *ngIf="
+          searchForm.get('keywords')?.invalid &&
+          searchForm.get('keywords')?.touched
+        "
+      >
+        Keywords are required (max 50 chars)
+      </mat-error>
+    </mat-form-field>
 
-      <!-- Search Button -->
-      <button type="submit" [disabled]="searchForm.invalid">Search</button>
-    </div>
+    <!-- Search Button -->
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      [disabled]="searchForm.invalid"
+      class="search-button"
+    >
+      <mat-icon>search</mat-icon>
+      Search
+    </button>
+  </div>
 
-    <!-- Optional Fields Toggle -->
-    <div>
-      <button type="button" (click)="toggleOptionalFields()">
-        {{ showOptionalFields ? 'Hide' : 'Show' }} Optional Filters
-      </button>
-    </div>
+  <!-- Optional Fields Expansion Panel -->
+  <mat-expansion-panel class="optional-filters">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <mat-icon>filter_list</mat-icon>
+        Optional Filters
+      </mat-panel-title>
+    </mat-expansion-panel-header>
 
-    <!-- Optional Fields Container -->
-    <div *ngIf="showOptionalFields">
+    <div class="optional-fields">
       <!-- Language -->
-      <div>
-        <label for="language">Language <span>(Optional)</span></label>
+      <mat-form-field appearance="outline">
+        <mat-label>Language</mat-label>
         <input
-          id="language"
-          type="text"
+          matInput
           formControlName="language"
           placeholder="e.g., 'javascript'"
         />
-        <div
+        <mat-error
           *ngIf="
             searchForm.get('language')?.invalid &&
             searchForm.get('language')?.touched
           "
         >
-          Invalid language format.
-        </div>
-      </div>
+          Invalid language format
+        </mat-error>
+      </mat-form-field>
 
       <!-- Earliest Created Date -->
-      <div>
-        <label for="earliestCreatedDate"
-          >Created After <span>(Optional)</span></label
-        >
-        <input
-          id="earliestCreatedDate"
-          type="date"
-          formControlName="earliestCreatedDate"
-        />
-      </div>
+      <mat-form-field appearance="outline">
+        <mat-label>Created After</mat-label>
+        <input matInput type="date" formControlName="earliestCreatedDate" />
+      </mat-form-field>
 
       <!-- Max Pages -->
-      <div>
-        <label for="maxPages">Result Pages <span>(1-10)</span></label>
-        <input id="maxPages" type="number" formControlName="maxPages" />
-        <div
+      <mat-form-field appearance="outline">
+        <mat-label>Result Pages (1-5)</mat-label>
+        <input matInput type="number" formControlName="maxPages" />
+        <mat-error
           *ngIf="
             searchForm.get('maxPages')?.invalid &&
             searchForm.get('maxPages')?.touched
           "
         >
-          Must be between 1 and 10.
-        </div>
-      </div>
+          Must be between 1 and 10
+        </mat-error>
+      </mat-form-field>
     </div>
-  </form>
-</div>
+  </mat-expansion-panel>
+</form>

@@ -1,0 +1,53 @@
+/* GitHub Dark Theme Toolbar */
+mat-toolbar {
+  background-color: var(--gh-bg-secondary) !important;
+  color: var(--gh-text-primary) !important;
+  border-bottom: 1px solid var(--gh-border-primary);
+  box-shadow: 0 1px 0 var(--gh-border-primary);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 64px;
+}
+
+mat-toolbar mat-icon {
+  margin-right: 12px;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  color: var(--gh-text-primary);
+}
+
+mat-toolbar span {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--gh-text-primary);
+}
+
+/* App container styling */
+.app-container {
+  min-height: calc(100vh - 64px);
+  background-color: var(--gh-bg-primary);
+  padding-top: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  mat-toolbar {
+    height: 56px;
+  }
+
+  mat-toolbar span {
+    font-size: 18px;
+  }
+
+  mat-toolbar mat-icon {
+    margin-right: 8px;
+  }
+
+  .app-container {
+    padding: 16px;
+    min-height: calc(100vh - 56px);
+  }
+}

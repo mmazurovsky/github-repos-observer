@@ -1,35 +1,69 @@
-<div>
-  <div>
-    <h3>
-      <a [href]="item.url" target="_blank" rel="noopener noreferrer">
+<mat-card class="repo-card">
+  <mat-card-header>
+    <mat-card-title>
+      <a
+        [href]="item.url"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="repo-link"
+      >
         {{ item.name }}
       </a>
-    </h3>
-    <span *ngIf="item.language">
-      {{ item.language }}
-    </span>
-  </div>
+    </mat-card-title>
+    <mat-card-subtitle *ngIf="item.created">
+      Created on {{ item.created | date: 'mediumDate' }}
+    </mat-card-subtitle>
+  </mat-card-header>
 
-  <div>
-    <div>
-      <p>{{ item.stars }}</p>
-      <p>Stars</p>
+  <mat-card-content>
+    <div class="language-chip" *ngIf="item.language">
+      <mat-chip-set>
+        <mat-chip>
+          <mat-icon>code</mat-icon>
+          {{ item.language }}
+        </mat-chip>
+      </mat-chip-set>
     </div>
-    <div>
-      <p>{{ item.forks }}</p>
-      <p>Forks</p>
-    </div>
-    <div>
-      <p>{{ item.recency }}</p>
-      <p>Recency</p>
-    </div>
-    <div>
-      <p>{{ item.popularityScore }}</p>
-      <p>Score</p>
-    </div>
-  </div>
 
-  <div *ngIf="item.created">
-    <span>Created on: {{ item.created | date: 'longDate' }}</span>
-  </div>
-</div>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <mat-icon>star</mat-icon>
+        <div class="stat-content">
+          <span class="stat-value">{{ item.stars }}</span>
+          <span class="stat-label">Stars</span>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <mat-icon>call_split</mat-icon>
+        <div class="stat-content">
+          <span class="stat-value">{{ item.forks }}</span>
+          <span class="stat-label">Forks</span>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <mat-icon>schedule</mat-icon>
+        <div class="stat-content">
+          <span class="stat-value">{{ item.recency }}</span>
+          <span class="stat-label">Recency</span>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <mat-icon>trending_up</mat-icon>
+        <div class="stat-content">
+          <span class="stat-value">{{ item.popularityScore }}</span>
+          <span class="stat-label">Score</span>
+        </div>
+      </div>
+    </div>
+  </mat-card-content>
+
+  <mat-card-actions>
+    <a mat-button [href]="item.url" target="_blank" rel="noopener noreferrer">
+      <mat-icon>open_in_new</mat-icon>
+      View Repository
+    </a>
+  </mat-card-actions>
+</mat-card>

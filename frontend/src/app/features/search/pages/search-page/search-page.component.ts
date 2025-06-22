@@ -1,6 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { finalize } from 'rxjs';
 import { RepositoriesSearchIn } from '../../../../core/models/repositories-search-in.model';
 import { SearchApiService } from '../../../../core/services/search-api.service';
@@ -11,7 +14,14 @@ import { SearchResultsComponent } from '../../components/search-results/search-r
 @Component({
   selector: 'app-search-page',
   standalone: true,
-  imports: [CommonModule, SearchBarComponent, SearchResultsComponent],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    SearchBarComponent,
+    SearchResultsComponent,
+  ],
   templateUrl: './search-page.component.html',
   styleUrl: './search-page.component.css',
 })
