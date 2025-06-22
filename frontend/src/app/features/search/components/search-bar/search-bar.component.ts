@@ -1,5 +1,10 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { RepositoriesSearchIn } from '../../../../core/models/repositories-search-in.model';
 import { CommonModule } from '@angular/common';
 
@@ -8,7 +13,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [ReactiveFormsModule, CommonModule],
   templateUrl: './search-bar.component.html',
-  styleUrl: './search-bar.component.css'
+  styleUrl: './search-bar.component.css',
 })
 export class SearchBarComponent {
   @Output() search = new EventEmitter<RepositoriesSearchIn>();
@@ -20,7 +25,7 @@ export class SearchBarComponent {
       keywords: ['', [Validators.required, Validators.maxLength(50)]],
       earliestCreatedDate: [''],
       language: ['', [Validators.pattern(/^[a-zA-Z\s]*$/)]],
-      maxPages: [10, [Validators.min(1), Validators.max(10)]]
+      maxPages: [10, [Validators.min(1), Validators.max(10)]],
     });
   }
 

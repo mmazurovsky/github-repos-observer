@@ -7,7 +7,7 @@ export const MOCK_SEARCH_RESULTS = [
     stars: 100,
     forks: 50,
     recency: 'recent',
-    popularityScore: '9.5'
+    popularityScore: '9.5',
   },
   {
     name: 'Test Repo 2',
@@ -17,7 +17,7 @@ export const MOCK_SEARCH_RESULTS = [
     stars: 200,
     forks: 150,
     recency: 'old',
-    popularityScore: '8.7'
+    popularityScore: '8.7',
   },
   {
     name: 'Test Repo 3',
@@ -27,7 +27,7 @@ export const MOCK_SEARCH_RESULTS = [
     stars: 100,
     forks: 50,
     recency: 'recent',
-    popularityScore: '9.5'
+    popularityScore: '9.5',
   },
   {
     name: 'Test Repo 4',
@@ -37,7 +37,7 @@ export const MOCK_SEARCH_RESULTS = [
     stars: 200,
     forks: 150,
     recency: 'old',
-    popularityScore: '8.7'
+    popularityScore: '8.7',
   },
   {
     name: 'Test Repo 5',
@@ -47,7 +47,7 @@ export const MOCK_SEARCH_RESULTS = [
     stars: 100,
     forks: 50,
     recency: 'recent',
-    popularityScore: '9.5'
+    popularityScore: '9.5',
   },
   {
     name: 'Test Repo 6',
@@ -57,6 +57,6 @@ export const MOCK_SEARCH_RESULTS = [
     stars: 200,
     forks: 150,
     recency: 'old',
-    popularityScore: '8.7'
-  }
+    popularityScore: '8.7',
+  },
 ];

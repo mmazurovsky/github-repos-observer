@@ -11,6 +11,6 @@ bootstrapApplication(AppComponent, {
     provideRouter(routes),
     provideHttpClient(),
     SearchApiService,
-    SearchStateService
-  ]
-}).catch((err) => console.error(err));
+    SearchStateService,
+  ],
+}).catch(err => console.error(err));

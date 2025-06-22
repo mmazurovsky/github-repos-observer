@@ -9,9 +9,8 @@ describe('SearchBarComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SearchBarComponent, ReactiveFormsModule]
-    })
-    .compileComponents();
+      imports: [SearchBarComponent, ReactiveFormsModule],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SearchBarComponent);
     component = fixture.componentInstance;

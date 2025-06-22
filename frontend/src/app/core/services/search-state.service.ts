@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { RepositoriesSearchOut } from '../models/repositories-search-out.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SearchStateService {
   private readonly _loading = new BehaviorSubject<boolean>(false);
@@ -25,4 +25,4 @@ export class SearchStateService {
   setError(error: string | null): void {
     this._error.next(error);
   }
-} 
+}

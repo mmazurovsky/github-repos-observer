@@ -7,7 +7,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './search-result-item.component.html',
-  styleUrl: './search-result-item.component.css'
+  styleUrl: './search-result-item.component.css',
 })
 export class SearchResultItemComponent {
   @Input({ required: true }) item!: RepositoriesSearchOut;

@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule, AsyncPipe, SearchResultItemComponent],
   templateUrl: './search-results.component.html',
-  styleUrl: './search-results.component.css'
+  styleUrl: './search-results.component.css',
 })
 export class SearchResultsComponent {
   results$: Observable<RepositoriesSearchOut[]>;

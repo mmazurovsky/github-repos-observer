@@ -7,4 +7,4 @@ export interface RepositoriesSearchOut {
   forks: number;
   recency: string;
   popularityScore: string;
-} 
+}

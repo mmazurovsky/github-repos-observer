@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { MOCK_SEARCH_RESULTS } from './mock-data';
 
-test('should allow a user to search for repositories and see results', async ({ page }) => {
+test('should allow a user to search for repositories and see results', async ({
+  page,
+}) => {
   // Mock the API response with artificial delay to simulate loading
   await page.route('**/api/search**', async route => {
     // Add 2-3 second delay to simulate real API loading time
@@ -60,7 +62,7 @@ test('should allow a user to search for repositories and see results', async ({ 
   const resultsContainer = page.locator('app-search-results');
 
   // Scroll through the results
-  await resultsContainer.evaluate(node => node.scrollTop = node.scrollHeight);
+  await resultsContainer.evaluate(node => (node.scrollTop = node.scrollHeight));
 
   // Pause to visually confirm scrolling in headed mode
   await page.waitForTimeout(2000);
@@ -70,4 +72,4 @@ test('should allow a user to search for repositories and see results', async ({ 
 
   // Final pause to see the completed test
   await page.waitForTimeout(2000);
-}); 
+});

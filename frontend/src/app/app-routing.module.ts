@@ -5,12 +5,15 @@ export const routes: Routes = [
   { path: '', redirectTo: 'search', pathMatch: 'full' },
   {
     path: 'search',
-    loadComponent: () => import('./features/search/pages/search-page/search-page.component').then(c => c.SearchPageComponent)
-  }
+    loadComponent: () =>
+      import('./features/search/pages/search-page/search-page.component').then(
+        c => c.SearchPageComponent
+      ),
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

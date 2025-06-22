@@ -3,4 +3,4 @@ export interface RepositoriesSearchIn {
   earliestCreatedDate?: string;
   language?: string;
   maxPages?: number;
-} 
+}

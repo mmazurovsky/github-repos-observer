@@ -5,15 +5,16 @@ import { RepositoriesSearchOut } from '../models/repositories-search-out.model';
 import { RepositoriesSearchIn } from '../models/repositories-search-in.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SearchApiService {
-
   private readonly API_URL = '/api/search';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  searchRepositories(params: RepositoriesSearchIn): Observable<RepositoriesSearchOut[]> {
+  searchRepositories(
+    params: RepositoriesSearchIn
+  ): Observable<RepositoriesSearchOut[]> {
     let httpParams = new HttpParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -21,6 +22,8 @@ export class SearchApiService {
       }
     });
 
-    return this.http.get<RepositoriesSearchOut[]>(this.API_URL, { params: httpParams });
+    return this.http.get<RepositoriesSearchOut[]>(this.API_URL, {
+      params: httpParams,
+    });
   }
-} 
+}

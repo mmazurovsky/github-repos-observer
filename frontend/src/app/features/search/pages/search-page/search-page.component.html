@@ -3,12 +3,12 @@
 
   <div>
     <!-- Loading Indicator -->
-    <div *ngIf="(state.loading$ | async)">
+    <div *ngIf="state.loading$ | async">
       <div>Loading...</div>
     </div>
 
     <!-- Error Message -->
-    <div *ngIf="(state.error$ | async) as error">
+    <div *ngIf="state.error$ | async as error">
       <strong>Error:</strong>
       <span>{{ error }}</span>
     </div>

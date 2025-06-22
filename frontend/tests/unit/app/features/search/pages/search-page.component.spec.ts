@@ -16,18 +16,17 @@ describe('SearchPageComponent', () => {
   const mockSearchParams: RepositoriesSearchIn = { keywords: 'test' };
 
   beforeEach(async () => {
-    searchApiSpy = jasmine.createSpyObj('SearchApiService', ['searchRepositories']);
+    searchApiSpy = jasmine.createSpyObj('SearchApiService', [
+      'searchRepositories',
+    ]);
 
     await TestBed.configureTestingModule({
-      imports: [
-        SearchPageComponent
-      ],
+      imports: [SearchPageComponent],
       providers: [
         { provide: SearchApiService, useValue: searchApiSpy },
-        SearchStateService // Use real state service to check state changes
-      ]
-    })
-      .compileComponents();
+        SearchStateService, // Use real state service to check state changes
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SearchPageComponent);
     component = fixture.componentInstance;
@@ -38,7 +37,7 @@ describe('SearchPageComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should set results when API returns successfully with data', (done) => {
+  it('should set results when API returns successfully with data', done => {
     searchApiSpy.searchRepositories.and.returnValue(of(MOCK_SEARCH_RESULTS));
     spyOn(stateService, 'setResults').and.callThrough();
 
@@ -53,7 +52,7 @@ describe('SearchPageComponent', () => {
     expect(stateService.setResults).toHaveBeenCalledWith(MOCK_SEARCH_RESULTS);
   });
 
-  it('should set an empty array when API returns successfully with no data', (done) => {
+  it('should set an empty array when API returns successfully with no data', done => {
     searchApiSpy.searchRepositories.and.returnValue(of([]));
     spyOn(stateService, 'setResults').and.callThrough();
 
@@ -73,14 +72,16 @@ describe('SearchPageComponent', () => {
     expect(stateService.setResults).toHaveBeenCalledTimes(2);
   });
 
-  it('should extract error message from HttpErrorResponse when API call fails', (done) => {
+  it('should extract error message from HttpErrorResponse when API call fails', done => {
     const errorResponse = new HttpErrorResponse({
       error: { error: 'Invalid search request' },
       status: 400,
-      statusText: 'Bad Request'
+      statusText: 'Bad Request',
     });
 
-    searchApiSpy.searchRepositories.and.returnValue(throwError(() => errorResponse));
+    searchApiSpy.searchRepositories.and.returnValue(
+      throwError(() => errorResponse)
+    );
     spyOn(stateService, 'setError').and.callThrough();
 
     stateService.error$.subscribe((error: any) => {
@@ -91,11 +92,15 @@ describe('SearchPageComponent', () => {
     });
 
     component.handleSearch(mockSearchParams);
-    expect(stateService.setError).toHaveBeenCalledWith('Invalid search request');
+    expect(stateService.setError).toHaveBeenCalledWith(
+      'Invalid search request'
+    );
   });
 
-  it('should show generic error when API call fails with no specific error message', (done) => {
-    searchApiSpy.searchRepositories.and.returnValue(throwError(() => new Error('Network error')));
+  it('should show generic error when API call fails with no specific error message', done => {
+    searchApiSpy.searchRepositories.and.returnValue(
+      throwError(() => new Error('Network error'))
+    );
     spyOn(stateService, 'setError').and.callThrough();
 
     stateService.error$.subscribe((error: any) => {
