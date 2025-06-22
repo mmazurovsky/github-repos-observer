@@ -1,0 +1,30 @@
+services:
+  github_repos_observer_frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${MY_IMAGE:-github-repos-observer-frontend:latest}
+    restart: unless-stopped
+    ports:
+      - '4200:8080'
+    platform: linux/amd64
+    networks:
+      - github_repos_observer_network
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://localhost:8080/health',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  github_repos_observer_network:
+    external: true

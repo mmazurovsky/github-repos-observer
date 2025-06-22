@@ -24,12 +24,12 @@
       <p>Recency</p>
     </div>
     <div>
-      <p>{{ item.popularityScore | number:'1.2-2' }}</p>
+      <p>{{ item.popularityScore }}</p>
       <p>Score</p>
     </div>
   </div>
 
   <div *ngIf="item.created">
-    <span>Created on: {{ item.created | date:'longDate' }}</span>
+    <span>Created on: {{ item.created | date: 'longDate' }}</span>
   </div>
 </div>

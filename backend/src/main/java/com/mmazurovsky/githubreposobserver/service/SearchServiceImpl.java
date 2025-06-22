@@ -1,6 +1,6 @@
 package com.mmazurovsky.githubreposobserver.service;
 
-import java.util.ArrayList;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -14,135 +14,121 @@ import org.springframework.stereotype.Service;
 import com.mmazurovsky.githubreposobserver.client.GithubClient;
 import com.mmazurovsky.githubreposobserver.dto.GithubRepositorySearchResults;
 import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositoryItemResponse;
-import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositorySearchResponse;
 import com.mmazurovsky.githubreposobserver.dto.in.RepositoriesSearchIn;
 
 @Service
 public class SearchServiceImpl implements SearchService {
     private static final Logger logger = LoggerFactory.getLogger(SearchServiceImpl.class);
     private static final int RESULTS_PER_PAGE = 100;
+    private static final Duration RATE_LIMIT_DELAY = Duration.ofMillis(50);
+    private static final int DEFAULT_MAX_PAGES = 5;
 
-    private final GithubClient githubRepositoryClient;
+    private final GithubClient githubClient;
     private final ExecutorService virtualThreadExecutor;
 
-    public SearchServiceImpl(GithubClient githubRepositoryClient) {
-        this.githubRepositoryClient = githubRepositoryClient;
+    public SearchServiceImpl(GithubClient githubClient) {
+        this.githubClient = githubClient;
         this.virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
     @Override
     public GithubRepositorySearchResults searchRepositories(RepositoriesSearchIn request) {
-        int maxPages = request.maxPages() != null ? request.maxPages() : 5;
+        int maxPages = request.maxPages() != null ? request.maxPages() : DEFAULT_MAX_PAGES;
 
-        // Create futures for the 4 different search requests
-        CompletableFuture<Integer> minStarsFuture = CompletableFuture.supplyAsync(() ->
-            getMinStars(request), virtualThreadExecutor);
+        logger.info("🔍 Searching repositories with hybrid approach: sequential normalization + concurrent pagination");
 
-        CompletableFuture<Integer> minForksFuture = CompletableFuture.supplyAsync(() ->
-            getMinForks(request), virtualThreadExecutor);
+        var normalizationValues = fetchNormalizationValues(request);
+        var repositories = fetchRepositoriesConcurrently(request, maxPages);
 
-        CompletableFuture<Integer> maxStarsFuture = CompletableFuture.supplyAsync(() ->
-            getMaxStars(request), virtualThreadExecutor);
+        int maxForks = repositories.stream()
+                .mapToInt(GithubRepositoryItemResponse::forksCount)
+                .max()
+                .orElse(0);
 
-        CompletableFuture<List<GithubRepositoryItemResponse>> repositoriesFuture = CompletableFuture.supplyAsync(() ->
-            getRepositoriesWithMaxForks(request, maxPages), virtualThreadExecutor);
+        logger.info("✅ Search completed: minStars={}, maxStars={}, minForks={}, maxForks={}, repositories={}",
+                normalizationValues.minStars(), normalizationValues.maxStars(),
+                normalizationValues.minForks(), maxForks, repositories.size());
 
-        // Wait for all futures to complete - let any exceptions propagate
-        int minStars = minStarsFuture.join();
-        int minForks = minForksFuture.join();
-        int maxStars = maxStarsFuture.join();
-        List<GithubRepositoryItemResponse> repositories = repositoriesFuture.join();
-
-        // Get maxForks from the repositories we fetched (desc order by forks)
-        int maxForks = repositories.isEmpty() ? 0 : repositories.get(0).forksCount();
-
-        logger.info("Search results: minStars={}, maxStars={}, minForks={}, maxForks={}, repositories={}",
-                   minStars, maxStars, minForks, maxForks, repositories.size());
-
-        return new GithubRepositorySearchResults(minStars, maxStars, minForks, maxForks, repositories);
+        return new GithubRepositorySearchResults(
+                normalizationValues.minStars(),
+                normalizationValues.maxStars(),
+                normalizationValues.minForks(),
+                maxForks,
+                repositories
+        );
     }
 
-    private int getMinStars(RepositoriesSearchIn request) {
-        // 1. order is asc, sort is stars - to get minStars from first item
-        RepositoriesSearchIn minStarsRequest = new RepositoriesSearchIn(
+    private NormalizationValues fetchNormalizationValues(RepositoriesSearchIn request) {
+        logger.debug("📊 Fetching normalization values sequentially with rate limiting...");
+
+        int minStars = fetchSingleValue(request, "stars", "asc", "min stars");
+        rateLimitDelay();
+
+        int minForks = fetchSingleValue(request, "forks", "asc", "min forks");
+        rateLimitDelay();
+
+        int maxStars = fetchSingleValue(request, "stars", "desc", "max stars");
+        rateLimitDelay();
+
+        return new NormalizationValues(minStars, maxStars, minForks);
+    }
+
+    private List<GithubRepositoryItemResponse> fetchRepositoriesConcurrently(RepositoriesSearchIn request, int maxPages) {
+        logger.debug("🚀 Fetching {} pages concurrently using virtual threads", maxPages);
+
+        return IntStream.rangeClosed(1, maxPages)
+                .mapToObj(page -> fetchPageAsync(request, page))
+                .map(CompletableFuture::join)
+                .flatMap(List::stream)
+                .toList();
+    }
+
+    private CompletableFuture<List<GithubRepositoryItemResponse>> fetchPageAsync(RepositoriesSearchIn request, int page) {
+        return CompletableFuture.supplyAsync(() -> {
+            logger.debug("📄 Fetching page {} using virtual thread", page);
+
+            var response = githubClient.searchRepositories(request, page, RESULTS_PER_PAGE, "forks", "desc");
+
+            logger.debug("✓ Completed page {} with {} items", page, response.items().size());
+            return response.items();
+        }, virtualThreadExecutor);
+    }
+
+        private int fetchSingleValue(RepositoriesSearchIn request, String sortBy, String order, String description) {
+        var singlePageRequest = new RepositoriesSearchIn(
             request.keywords(),
             request.earliestCreatedDate(),
             request.language(),
-            1 // Only need 1 page
-        );
+            1 // Only need 1 page for normalization values
+    );
+        var response = githubClient.searchRepositories(singlePageRequest, 1, 1, sortBy, order);
 
-        GithubRepositorySearchResponse response = githubRepositoryClient.searchRepositories(
-            minStarsRequest, 1, 1, "stars", "asc"
-        );
-
-        if (!response.items().isEmpty()) {
-            int minStars = response.items().get(0).stargazersCount();
-            logger.debug("MinStars found: {}", minStars);
-            return minStars;
-        }
-        return 0;
-    }
-
-    private int getMinForks(RepositoriesSearchIn request) {
-        // 2. order is asc, sort is forks - to get minForks from first item
-        RepositoriesSearchIn minForksRequest = new RepositoriesSearchIn(
-            request.keywords(),
-            request.earliestCreatedDate(),
-            request.language(),
-            1 // Only need 1 page
-        );
-
-        GithubRepositorySearchResponse response = githubRepositoryClient.searchRepositories(
-            minForksRequest, 1, 1, "forks", "asc"
-        );
-
-        if (!response.items().isEmpty()) {
-            int minForks = response.items().get(0).forksCount();
-            logger.debug("MinForks found: {}", minForks);
-            return minForks;
-        }
-        return 0;
-    }
-
-    private int getMaxStars(RepositoriesSearchIn request) {
-        // 3. order is desc, sort is stars - to get maxStars from first item
-        RepositoriesSearchIn maxStarsRequest = new RepositoriesSearchIn(
-            request.keywords(),
-            request.earliestCreatedDate(),
-            request.language(),
-            1 // Only need 1 page
-        );
-
-        GithubRepositorySearchResponse response = githubRepositoryClient.searchRepositories(
-            maxStarsRequest, 1, 1, "stars", "desc"
-        );
-
-        if (!response.items().isEmpty()) {
-            int maxStars = response.items().get(0).stargazersCount();
-            logger.debug("MaxStars found: {}", maxStars);
-            return maxStars;
-        }
-        return 0;
-    }
-
-    private List<GithubRepositoryItemResponse> getRepositoriesWithMaxForks(RepositoriesSearchIn request, int maxPages) {
-        // 4. order is desc, sort is forks - fetch maxPages amount of pages
-        List<CompletableFuture<List<GithubRepositoryItemResponse>>> pageFutures = IntStream.rangeClosed(1, maxPages)
-            .mapToObj(page -> CompletableFuture.supplyAsync(() -> {
-                GithubRepositorySearchResponse response = githubRepositoryClient.searchRepositories(
-                    request, page, RESULTS_PER_PAGE, "forks", "desc"
-                );
-                return response.items();
-            }, virtualThreadExecutor))
-            .toList();
-
-        // Collect all results - let any exceptions propagate
-        List<GithubRepositoryItemResponse> allItems = new ArrayList<>();
-        for (CompletableFuture<List<GithubRepositoryItemResponse>> future : pageFutures) {
-            allItems.addAll(future.join());
+        if (response.items().isEmpty()) {
+            logger.debug("⚠️ No results found for {}", description);
+            return 0;
         }
 
-        logger.debug("Repositories fetched: {}", allItems.size());
-        return allItems;
+        int value = extractValue(response.items().get(0), sortBy);
+        logger.debug("📈 {} found: {}", description, value);
+        return value;
     }
+
+    private int extractValue(GithubRepositoryItemResponse item, String sortBy) {
+        return switch (sortBy) {
+            case "stars" -> item.stargazersCount();
+            case "forks" -> item.forksCount();
+            default -> throw new IllegalArgumentException("Unknown sort field: " + sortBy);
+        };
+    }
+
+    private void rateLimitDelay() {
+        try {
+            Thread.sleep(RATE_LIMIT_DELAY.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("⚠️ Rate limit delay interrupted, continuing without delay");
+        }
+    }
+
+    private record NormalizationValues(int minStars, int maxStars, int minForks) {}
 }

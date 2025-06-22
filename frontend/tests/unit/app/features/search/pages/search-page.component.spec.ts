@@ -1,14 +1,11 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
-import { SearchPageComponent } from '@app/features/search/pages/search-page/search-page.component';
+import { RepositoriesSearchIn } from '@app/core/models/repositories-search-in.model';
+import { MOCK_SEARCH_RESULTS } from '@app/core/models/repositories-search-out.stub';
 import { SearchApiService } from '@app/core/services/search-api.service';
 import { SearchStateService } from '@app/core/services/search-state.service';
-import { MOCK_SEARCH_RESULTS } from '@app/core/models/repositories-search-out.stub';
-import { RepositoriesSearchIn } from '@app/core/models/repositories-search-in.model';
-import { SearchBarComponent } from '@app/features/search/components/search-bar/search-bar.component';
-import { SearchResultsComponent } from '@app/features/search/components/search-results/search-results.component';
-import { ReactiveFormsModule } from '@angular/forms';
-import { SearchResultItemComponent } from '@app/features/search/components/search-result-item/search-result-item.component';
+import { SearchPageComponent } from '@app/features/search/pages/search-page/search-page.component';
+import { of, throwError } from 'rxjs';
 
 describe('SearchPageComponent', () => {
   let component: SearchPageComponent;
@@ -30,7 +27,7 @@ describe('SearchPageComponent', () => {
         SearchStateService // Use real state service to check state changes
       ]
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(SearchPageComponent);
     component = fixture.componentInstance;
@@ -76,19 +73,40 @@ describe('SearchPageComponent', () => {
     expect(stateService.setResults).toHaveBeenCalledTimes(2);
   });
 
-  it('should set an error when API call fails', (done) => {
-    searchApiSpy.searchRepositories.and.returnValue(throwError(() => new Error('API Error')));
+  it('should extract error message from HttpErrorResponse when API call fails', (done) => {
+    const errorResponse = new HttpErrorResponse({
+      error: { error: 'Invalid search request' },
+      status: 400,
+      statusText: 'Bad Request'
+    });
+
+    searchApiSpy.searchRepositories.and.returnValue(throwError(() => errorResponse));
     spyOn(stateService, 'setError').and.callThrough();
 
     stateService.error$.subscribe((error: any) => {
       if (error) {
-        expect(error).toContain('An error occurred');
+        expect(error).toBe('Invalid search request');
         done();
       }
     });
 
     component.handleSearch(mockSearchParams);
-    expect(stateService.setError).toHaveBeenCalledWith(jasmine.stringMatching(/An error occurred/));
+    expect(stateService.setError).toHaveBeenCalledWith('Invalid search request');
+  });
+
+  it('should show generic error when API call fails with no specific error message', (done) => {
+    searchApiSpy.searchRepositories.and.returnValue(throwError(() => new Error('Network error')));
+    spyOn(stateService, 'setError').and.callThrough();
+
+    stateService.error$.subscribe((error: any) => {
+      if (error) {
+        expect(error).toBe('Network error');
+        done();
+      }
+    });
+
+    component.handleSearch(mockSearchParams);
+    expect(stateService.setError).toHaveBeenCalledWith('Network error');
   });
 
   it('should set loading state correctly during API call', () => {

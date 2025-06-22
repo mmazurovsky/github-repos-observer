@@ -9,7 +9,7 @@ export const MOCK_SEARCH_RESULTS: RepositoriesSearchOut[] = [
     stars: 100,
     forks: 50,
     recency: 'recent',
-    popularityScore: 9.5
+    popularityScore: '9.5'
   },
   {
     name: 'Test Repo 2',
@@ -19,6 +19,6 @@ export const MOCK_SEARCH_RESULTS: RepositoriesSearchOut[] = [
     stars: 200,
     forks: 150,
     recency: 'old',
-    popularityScore: 8.7
+    popularityScore: '8.7'
   }
-]; 
+];

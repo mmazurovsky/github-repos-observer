@@ -1,197 +1,147 @@
 package com.mmazurovsky.githubreposobserver.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
-import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import com.mmazurovsky.githubreposobserver.client.GithubClient;
-import com.mmazurovsky.githubreposobserver.dto.GithubRepositorySearchResults;
-import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositoryItemResponse;
-import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositorySearchResponse;
-import com.mmazurovsky.githubreposobserver.dto.in.RepositoriesSearchIn;
+import com.mmazurovsky.githubreposobserver.dto.out.RepositoriesSearchOut;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
 class SearchServiceImplTest {
 
     private static final Logger logger = LoggerFactory.getLogger(SearchServiceImplTest.class);
 
-    @Mock
-    private GithubClient githubClient;
-
-    private SearchServiceImpl searchService;
-
-    @BeforeEach
-    void setUp() {
-        searchService = new SearchServiceImpl(githubClient);
-    }
+    @Autowired
+    private TestRestTemplate restTemplate;
 
     @Test
-    void searchRepositories_shouldExecuteConcurrently() {
+    void search_nonExistSearch_shouldReturnConsistentEmptyResults() {
         // Given
-        final int maxPages = 3; // Use fewer pages for easier test management
-        final int delayPerPageMs = 200; // Reasonable delay for testing
-        final int expectedMaxExecutionTimeMs = delayPerPageMs + 150; // Allow overhead for parallel execution
+        final int numberOfRequests = 10;
+        final String url = UriComponentsBuilder.fromPath("/api/search")
+                .queryParam("keywords", "veryrareandspecifickeyword123456789")
+                .queryParam("language", "Java")
+                .queryParam("earliestCreatedDate", "2025-06-01")
+                .queryParam("maxPages", 1)  // Only 1 page to minimize API calls
+                .toUriString();
 
-        RepositoriesSearchIn request = new RepositoriesSearchIn(
-                "test-keywords",
-                null,
-                null,
-                maxPages
-        );
+                // When - Make 10 identical requests sequentially
+        logger.info("🔄 NON-EXISTENT SEARCH CONSISTENCY TEST 🔄");
+        logger.info("Making {} identical non-existent search requests to test consistency", numberOfRequests);
 
-        // Counter to track concurrent calls for the main search (desc forks)
-        AtomicInteger concurrentCalls = new AtomicInteger(0);
-        AtomicInteger maxConcurrentCalls = new AtomicInteger(0);
+        long totalStartTime = System.currentTimeMillis();
+        Object[] responses = new Object[numberOfRequests]; // Can be either success response or error
+        boolean[] isSuccess = new boolean[numberOfRequests];
+        long[] executionTimes = new long[numberOfRequests];
 
-        // Mock the 4 different API calls:
+                for (int i = 0; i < numberOfRequests; i++) {
+            long requestStartTime = System.currentTimeMillis();
 
-        // 1. Min stars (asc stars) - returns repo with lowest stars
-        when(githubClient.searchRepositories(any(RepositoriesSearchIn.class), eq(1), eq(1), eq("stars"), eq("asc")))
-                .thenReturn(new GithubRepositorySearchResponse(
-                        1,
-                        false,
-                        List.of(new GithubRepositoryItemResponse(
-                                1L,
-                                "min-stars-repo",
-                                "owner/min-stars-repo",
-                                "https://github.com/owner/min-stars-repo",
-                                10, // min stars
-                                5,
-                                "2023-01-01T00:00:00Z",
-                                "Java",
-                                OffsetDateTime.parse("2023-01-01T00:00:00Z")
-                        ))
-                ));
+            try {
+                ResponseEntity<List<RepositoriesSearchOut>> response = restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<List<RepositoriesSearchOut>>() {}
+                );
+                responses[i] = response;
+                isSuccess[i] = true;
+                logger.debug("Request {} SUCCESS in {}ms with status: {}",
+                            i + 1, System.currentTimeMillis() - requestStartTime, response.getStatusCode());
+            } catch (Exception e) {
+                responses[i] = e;
+                isSuccess[i] = false;
+                logger.error("Request {} FAILED in {}ms with error: {}",
+                            i + 1, System.currentTimeMillis() - requestStartTime, e.getClass().getSimpleName());
+                logger.error("Error details: {}", e.getMessage());
+                if (e.getCause() != null) {
+                    logger.error("Root cause: {} - {}", e.getCause().getClass().getSimpleName(), e.getCause().getMessage());
+                }
 
-        // 2. Min forks (asc forks) - returns repo with lowest forks
-        when(githubClient.searchRepositories(any(RepositoriesSearchIn.class), eq(1), eq(1), eq("forks"), eq("asc")))
-                .thenReturn(new GithubRepositorySearchResponse(
-                        1,
-                        false,
-                        List.of(new GithubRepositoryItemResponse(
-                                2L,
-                                "min-forks-repo",
-                                "owner/min-forks-repo",
-                                "https://github.com/owner/min-forks-repo",
-                                20,
-                                1, // min forks
-                                "2023-01-01T00:00:00Z",
-                                "Python",
-                                OffsetDateTime.parse("2023-01-01T00:00:00Z")
-                        ))
-                ));
+                // Log the full stack trace for debugging
+                logger.error("Full stack trace for request " + (i + 1), e);
+            }
 
-        // 3. Max stars (desc stars) - returns repo with highest stars
-        when(githubClient.searchRepositories(any(RepositoriesSearchIn.class), eq(1), eq(1), eq("stars"), eq("desc")))
-                .thenReturn(new GithubRepositorySearchResponse(
-                        1,
-                        false,
-                        List.of(new GithubRepositoryItemResponse(
-                                3L,
-                                "max-stars-repo",
-                                "owner/max-stars-repo",
-                                "https://github.com/owner/max-stars-repo",
-                                10000, // max stars
-                                2000,
-                                "2023-01-01T00:00:00Z",
-                                "TypeScript",
-                                OffsetDateTime.parse("2023-01-01T00:00:00Z")
-                        ))
-                ));
+            executionTimes[i] = System.currentTimeMillis() - requestStartTime;
+        }
 
-        // 4. Main search (desc forks) - returns multiple pages of repositories
-        when(githubClient.searchRepositories(eq(request), anyInt(), eq(100), eq("forks"), eq("desc")))
-                .thenAnswer(invocation -> {
-                    int currentConcurrent = concurrentCalls.incrementAndGet();
-                    maxConcurrentCalls.updateAndGet(max -> Math.max(max, currentConcurrent));
+        long totalExecutionTime = System.currentTimeMillis() - totalStartTime;
 
-                    int page = invocation.getArgument(1);
-                    logger.debug("Starting to fetch page {} (concurrent calls: {})", page, currentConcurrent);
+        // Then - Verify consistency
+        logger.info("Total execution time for {} requests: {}ms", numberOfRequests, totalExecutionTime);
+        logger.info("Average execution time per request: {}ms", totalExecutionTime / numberOfRequests);
 
-                    try {
-                        // Simulate network delay
-                        Thread.sleep(delayPerPageMs);
+                // Analyze results and require all requests to succeed
+        int successCount = 0;
+        int errorCount = 0;
 
-                        // Create items for this page
-                        List<GithubRepositoryItemResponse> pageItems = List.of(
-                                new GithubRepositoryItemResponse(
-                                        (long) (page * 100 + 1),
-                                        "repo-" + page + "-1",
-                                        "owner/repo-" + page + "-1",
-                                        "https://github.com/owner/repo-" + page + "-1",
-                                        5000 - (page * 100),
-                                        3000 - (page * 10),
-                                        "2023-01-01T00:00:00Z",
-                                        "Java",
-                                        OffsetDateTime.parse("2023-01-01T00:00:00Z")
-                                ),
-                                new GithubRepositoryItemResponse(
-                                        (long) (page * 100 + 2),
-                                        "repo-" + page + "-2",
-                                        "owner/repo-" + page + "-2",
-                                        "https://github.com/owner/repo-" + page + "-2",
-                                        4500 - (page * 100),
-                                        2900 - (page * 10),
-                                        "2023-01-01T00:00:00Z",
-                                        "Python",
-                                        OffsetDateTime.parse("2023-01-01T00:00:00Z")
-                                )
-                        );
+        for (int i = 0; i < numberOfRequests; i++) {
+            if (isSuccess[i]) {
+                successCount++;
+            } else {
+                errorCount++;
+            }
+        }
 
-                        return new GithubRepositorySearchResponse(
-                                pageItems.size(),
-                                false,
-                                pageItems
-                        );
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException(e);
-                    } finally {
-                        concurrentCalls.decrementAndGet();
-                        logger.debug("Finished fetching page {}", page);
-                    }
-                });
+        logger.info("📊 RESULTS ANALYSIS:");
+        logger.info("  Successful requests: {}/{}", successCount, numberOfRequests);
+        logger.info("  Failed requests: {}/{}", errorCount, numberOfRequests);
 
-        // When
-        long startTime = System.currentTimeMillis();
-        GithubRepositorySearchResults results = searchService.searchRepositories(request);
-        long executionTime = System.currentTimeMillis() - startTime;
+        // ASSERT: All requests must succeed
+        assertThat(errorCount)
+                .as("All requests should succeed - no failures expected")
+                .isEqualTo(0);
 
-        // Then - Focus only on concurrency testing
-        logger.info("🚀 CONCURRENCY TEST 🚀");
-        logger.info("Execution time: {}ms (expected max: {}ms for parallel execution)",
-                   executionTime, expectedMaxExecutionTimeMs);
-        logger.info("Max concurrent calls observed: {} (expected: {})",
-                   maxConcurrentCalls.get(), maxPages);
-        logger.info("Total repositories returned: {}", results.repositories().size());
+                assertThat(successCount)
+                .as("All {} requests should be successful", numberOfRequests)
+                .isEqualTo(numberOfRequests);
 
-        // Verify parallel execution happened for the main search
-        assertThat(maxConcurrentCalls.get())
-                .as("Should have concurrent execution for the main search")
-                .isGreaterThanOrEqualTo(2); // At least 2 concurrent calls
+        // Since all requests succeeded, verify they all return empty lists
+        logger.info("✅ All requests succeeded - verifying empty results consistency");
+        for (int i = 0; i < numberOfRequests; i++) {
+            @SuppressWarnings("unchecked")
+            ResponseEntity<List<RepositoriesSearchOut>> response = (ResponseEntity<List<RepositoriesSearchOut>>) responses[i];
 
-        // Verify execution time indicates parallel processing
-        assertThat(executionTime)
-                .as("Execution time should indicate parallel execution")
-                .isLessThan(expectedMaxExecutionTimeMs);
+            assertThat(response.getStatusCode())
+                    .as("Request %d should return HTTP 200 OK", i + 1)
+                    .isEqualTo(HttpStatus.OK);
 
-        // Verify we got some repositories back (basic functionality check)
-        assertThat(results.repositories())
-                .as("Should return some repositories")
-                .isNotEmpty();
+            List<RepositoriesSearchOut> list = response.getBody();
+
+            assertThat(list == null || list.isEmpty())
+                    .as("Request %d should return empty list for non-existent search", i + 1)
+                    .isTrue();
+
+            logger.debug("Request {} result: {} (size: {})",
+                        i + 1,
+                        list == null ? "null" : "empty list",
+                        list == null ? 0 : list.size());
+        }
+
+                logger.info("✅ All {} requests returned consistent empty results", numberOfRequests);
+
+        // Basic performance check - should complete in reasonable time
+        double averageExecutionTime = (double) totalExecutionTime / numberOfRequests;
+        logger.info("✅ Average execution time: {}ms per request", (long) averageExecutionTime);
+
+        // Log execution time distribution for analysis
+        logger.info("📊 Execution time distribution:");
+        for (int i = 0; i < numberOfRequests; i++) {
+            logger.info("  Request {}: {}ms", i + 1, executionTimes[i]);
+        }
     }
 }

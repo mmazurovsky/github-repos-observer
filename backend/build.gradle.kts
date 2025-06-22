@@ -20,6 +20,7 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
@@ -30,6 +31,8 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations")
     // Retries logic
     implementation("org.springframework.retry:spring-retry")
+    // Rate limiting
+    implementation("com.google.guava:guava:33.0.0-jre")
     // Logging
     implementation("org.slf4j:slf4j-api")
     // Testing

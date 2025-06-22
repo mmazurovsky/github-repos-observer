@@ -1,3 +1,5 @@
+import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { finalize } from 'rxjs';
 import { RepositoriesSearchIn } from '../../../../core/models/repositories-search-in.model';
@@ -5,7 +7,6 @@ import { SearchApiService } from '../../../../core/services/search-api.service';
 import { SearchStateService } from '../../../../core/services/search-state.service';
 import { SearchBarComponent } from '../../components/search-bar/search-bar.component';
 import { SearchResultsComponent } from '../../components/search-results/search-results.component';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-search-page',
@@ -19,7 +20,7 @@ export class SearchPageComponent {
   constructor(
     private searchApi: SearchApiService,
     public state: SearchStateService
-  ) {}
+  ) { }
 
   handleSearch(params: RepositoriesSearchIn): void {
     this.state.setLoading(true);
@@ -33,8 +34,24 @@ export class SearchPageComponent {
         this.state.setResults(results);
       },
       error: (err) => {
-        console.error(err);
-        this.state.setError('An error occurred while fetching repositories. Please ensure your API token is valid and try again.');
+        console.error('Search error:', err);
+
+        let errorMessage = 'An unexpected error occurred while fetching repositories.';
+
+        if (err instanceof HttpErrorResponse) {
+          // Try to extract error message from the response body
+          if (err.error && err.error.error) {
+            errorMessage = err.error.error;
+          } else if (err.error && typeof err.error === 'string') {
+            errorMessage = err.error;
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+        } else if (err && err.message) {
+          errorMessage = err.message;
+        }
+
+        this.state.setError(errorMessage);
       }
     });
   }

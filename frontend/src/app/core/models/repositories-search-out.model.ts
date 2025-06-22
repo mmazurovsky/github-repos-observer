@@ -6,5 +6,5 @@ export interface RepositoriesSearchOut {
   stars: number;
   forks: number;
   recency: string;
-  popularityScore: number;
+  popularityScore: string;
 } 

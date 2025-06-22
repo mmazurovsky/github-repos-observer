@@ -1,10 +1,10 @@
 package com.mmazurovsky.githubreposobserver.dto.external;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.OffsetDateTime;
+
 import org.jetbrains.annotations.Nullable;
 
-
-import java.time.OffsetDateTime;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record GithubRepositoryItemResponse(
         long id,
@@ -18,7 +18,7 @@ public record GithubRepositoryItemResponse(
         @JsonProperty("forks_count")
         int forksCount,
         @JsonProperty("updated_at")
-        String updatedAt,
+        @Nullable String updatedAt,
         @JsonProperty("language")
         @Nullable String language,
         @JsonProperty("created_at")

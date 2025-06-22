@@ -2,6 +2,7 @@ package com.mmazurovsky.githubreposobserver.service;
 
 import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.Period;
 import java.util.Comparator;
 import java.util.List;
@@ -112,8 +113,9 @@ public class ScoringServiceImpl implements ScoringService {
         }
     }
 
-        private RepositoriesSearchOut convertToRepositoriesSearchOut(GithubRepositoryItemResponse item, String popularityScore) {
-        String recency = calculateRecency(item.created() != null ? item.created().toLocalDate() : null);
+    private RepositoriesSearchOut convertToRepositoriesSearchOut(GithubRepositoryItemResponse item, String popularityScore) {
+        LocalDate updatedDate = parseUpdatedAt(item.updatedAt());
+        String recency = calculateRecency(updatedDate);
 
         return new RepositoriesSearchOut(
             item.name(),
@@ -127,13 +129,25 @@ public class ScoringServiceImpl implements ScoringService {
         );
     }
 
-    private String calculateRecency(LocalDate createdDate) {
-        if (createdDate == null) {
+    private LocalDate parseUpdatedAt(String updatedAt) {
+        if (updatedAt == null || updatedAt.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return OffsetDateTime.parse(updatedAt).toLocalDate();
+        } catch (Exception e) {
+            // If parsing fails, return null and recency will show as "Unknown"
+            return null;
+        }
+    }
+
+    private String calculateRecency(LocalDate updatedDate) {
+        if (updatedDate == null) {
             return "Unknown";
         }
 
         LocalDate now = LocalDate.now();
-        Period period = Period.between(createdDate, now);
+        Period period = Period.between(updatedDate, now);
 
         if (period.getYears() > 0) {
             return period.getYears() + " year" + (period.getYears() > 1 ? "s" : "") + " ago";

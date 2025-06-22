@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.google.common.util.concurrent.RateLimiter;
 import com.mmazurovsky.githubreposobserver.dto.external.GithubRepositorySearchResponse;
 import com.mmazurovsky.githubreposobserver.dto.in.RepositoriesSearchIn;
 
@@ -34,6 +35,11 @@ public class GithubClientImpl implements GithubClient {
 
     private final WebClient githubWebClient;
 
+    // Rate limiter: GitHub allows 5000 requests/hour for authenticated requests
+    // Conservative rate: 1.2 requests/second (4320 requests/hour) to leave buffer
+    private static final double REQUESTS_PER_SECOND = 0.8;
+    private final RateLimiter rateLimiter = RateLimiter.create(REQUESTS_PER_SECOND);
+
     private static final Logger logger = LoggerFactory.getLogger(GithubClientImpl.class);
 
     public GithubClientImpl(WebClient githubWebClient) {
@@ -50,8 +56,14 @@ public class GithubClientImpl implements GithubClient {
     ) {
         final String queryString = buildQueryString(request);
 
+        // Acquire rate limit permit before making the request
+        double waitTime = rateLimiter.acquire();
+        if (waitTime > 0) {
+            logger.debug("🛡️ Rate limiter: waited {:.2f} seconds before API call", waitTime);
+        }
+
         int retryCount = 0;
-        final int maxRetries = 3;
+        final int maxRetries = 5;
 
         while (retryCount < maxRetries) {
             try {
@@ -75,6 +87,20 @@ public class GithubClientImpl implements GithubClient {
                     // Return empty response for 422 errors - this is expected behavior
                     logger.info("Page {} returned 422 (Unprocessable Entity), returning empty result gracefully", page);
                     return new GithubRepositorySearchResponse(0, false, List.of());
+                }
+
+                if (statusCode == 403 && retryCount < maxRetries) {
+                    // Retry for 403 errors (rate limiting) - though rate limiter should prevent most of these
+                    retryCount++;
+                    logger.warn("Retrying page {} due to rate limiting despite rate limiter (attempt {}/{}): status={}, message={}",
+                               page, retryCount, maxRetries, statusCode, ex.getMessage());
+                    try {
+                        Thread.sleep(1000 * retryCount);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        continue;
+                    }
+                    continue;
                 }
 
                 if (ex.getStatusCode().is4xxClientError()) {

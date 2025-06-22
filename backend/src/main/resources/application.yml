@@ -6,7 +6,7 @@ spring:
     banner-mode: off
 
   config:
-    import: file:env\prod.env[.properties]
+    import: optional:file:env/prod.env[.properties]
 
   threads:
     virtual:
@@ -23,7 +23,7 @@ logging:
 # GitHub API Configuration
 github:
   api:
-    token: ${GITHUB_API_TOKEN}
+    token: ${GITHUB_API_TOKEN:}
 
 # Server configuration
 server:
